@@ -1,11 +1,6 @@
-import 'dart:ffi';
-import 'dart:io';
-
 import 'package:flutter/material.dart'; 
 import 'package:form_field_validator/form_field_validator.dart'; 
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:crypt/crypt.dart';
+import 'package:app/Utils/loginUtil.dart';
   
 class Login extends StatefulWidget { 
   const Login({Key? key}) : super(key: key); 
@@ -24,7 +19,8 @@ class _LoginState extends State<Login> {
     return Scaffold( 
       appBar: AppBar( 
         title: Text('Login'), 
-        centerTitle: true, 
+        centerTitle: true,
+        automaticallyImplyLeading: false,
       ), 
       body: SingleChildScrollView( 
         child: Column( 
@@ -131,8 +127,9 @@ class _LoginState extends State<Login> {
                                     };
                                   });
                                   print(userData); 
-                                  var result = await loginFunction(userData['email'] as String, userData['password'] as String);
-                                  print("Login Success: $result");
+                                  // var result = await loginFunction(userData['email'] as String, userData['password'] as String);
+                                  // print("Login Success: $result");
+                                  Navigator.pushReplacementNamed(context, '/',arguments: {'email': userData['email']});
                                   } 
                                 },
                                 child: const Text( 
@@ -212,23 +209,3 @@ class _LoginState extends State<Login> {
     ); 
   } 
 } 
-
-Future<bool> loginFunction(String email,String password) async{
-  final response = await http.post(
-    Uri.parse('http://20.215.234.92:5000/test/login'),
-    headers: <String,String>{
-      'Content-Type' : 'application/json; charset=UTF-8'
-    },
-    body: jsonEncode(<String,String>{
-      'username' : email,
-      'password' : Crypt.sha256(password).toString(),
-    })
-  );
-  if(response.statusCode == 200){
-    return true;
-  }
-  else{
-    return false;
-  }
-  
-}
