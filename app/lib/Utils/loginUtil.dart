@@ -4,7 +4,7 @@ import 'package:crypt/crypt.dart';
 
 Future<bool> loginFunction(String email,String password) async{
   final response = await http.post(
-    Uri.parse('http://20.215.234.92:5000/test/login'),
+    Uri.parse('http://46.41.136.84:5000/test/login'),
     headers: <String,String>{
       'Content-Type' : 'application/json; charset=UTF-8'
     },
@@ -19,5 +19,4 @@ Future<bool> loginFunction(String email,String password) async{
   else{
     return false;
   }
-  
 }
