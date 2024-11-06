@@ -19,6 +19,7 @@ class _LoginState extends State<Login> {
 
   @override 
   Widget build(BuildContext context) { 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return Scaffold( 
       appBar: AppBar( 
@@ -33,12 +34,9 @@ class _LoginState extends State<Login> {
               padding: const EdgeInsets.only(top: 30.0), 
               child: Center( 
                 child: Container( 
-                  width: 120, 
-                  height: 120, 
-                  decoration: BoxDecoration( 
-                      borderRadius: BorderRadius.circular(40), 
-                      border: Border.all(color: Colors.blueGrey)), 
-                  child: Image.asset('assets/logo.png'), 
+                  width: 200, 
+                  height: 200,  
+                  child: Image.asset('lib/assets/logo.png', fit: BoxFit.fill,), 
                 ), 
               ), 
             ), 
@@ -125,15 +123,12 @@ class _LoginState extends State<Login> {
                                   if (_formkey.currentState!.validate()) { 
                                     // print('form submiitted'); 
                                     setState(() {
-                                    userData = {
-                                      "email": _emailController.text,
-                                      "password": _passwordController.text
-                                    };
+                                    authProvider.login(_emailController.text, _passwordController.text);
                                   });
-                                  print(userData); 
+                      
                                   // var result = await loginFunction(userData['email'] as String, userData['password'] as String);
                                   // print("Login Success: $result");
-                                  Navigator.pushReplacementNamed(context, '/',arguments: {'email': userData['email']});
+                                  Navigator.pushReplacementNamed(context, '/');
                                   } 
                                 },
                                 child: const Text( 
@@ -164,25 +159,10 @@ class _LoginState extends State<Login> {
                                 child: Row( 
                                   children: [ 
                                     Container( 
-                                        height: 40, 
-                                        width: 40, 
-                                        child: Image.asset( 
-                                          'assets/social.jpg', 
-                                          fit: BoxFit.cover, 
-                                        )), 
-                                    Container( 
-                                      height: 70, 
-                                      width: 70, 
-                                      child: Image.asset( 
-                                        'assets/vishal.png', 
-                                        fit: BoxFit.cover, 
-                                      ), 
-                                    ), 
-                                    Container( 
                                       height: 40, 
                                       width: 40, 
                                       child: Image.asset( 
-                                        'assets/google.png', 
+                                        'lib/assets/google.png', 
                                         fit: BoxFit.cover, 
                                       ), 
                                     ), 

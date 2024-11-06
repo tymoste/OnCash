@@ -9,4 +9,11 @@ class UserPreferences {
     prefs.setString('email', user.email);
   }
 
+  Future<User> getUser() async{
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? email = prefs.getString('email') ?? '';
+    String? userName = prefs.getString('username') ?? '';
+    return User(userName: userName, email: email);
+  }
+
 }
