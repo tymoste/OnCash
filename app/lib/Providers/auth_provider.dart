@@ -6,10 +6,14 @@ import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/Models/user.dart';
 import 'package:app/Utils/shared_preference.dart';
+import 'package:crypt/crypt.dart';
 
 enum Status {
   LoggedIn,
-  NotLoggedIn
+  NotLoggedIn,
+  UserExists,
+  Registered,
+  ServerError
 }
 
 class AuthProvider extends ChangeNotifier{
@@ -17,7 +21,7 @@ class AuthProvider extends ChangeNotifier{
 
   Status get loggedInStatus => _loggedInStatus;
 
-  static const loginApiEndpoint = 'http://46.41.136.84:5000/test/login';
+  static const loginApiEndpoint = 'http://46.41.136.84:5000/login';
   static const registerApiEndpoint = 'http://46.41.136.84:5000/register';
 
   set loggedInStatus(Status value){
@@ -33,6 +37,7 @@ class AuthProvider extends ChangeNotifier{
       },
       body: jsonEncode(<String, String>{
         'username': userName,
+        // 'password': Crypt.sha256(password).toString(),
         'password': password,
         'email' : email,
       }),
@@ -43,14 +48,21 @@ class AuthProvider extends ChangeNotifier{
       return false;
     }
 
+    if(response?.statusCode == 400){
+      //todo
+      _loggedInStatus = Status.UserExists;
+      return false;
+    }
+
     if(response?.statusCode == 200){
-        print('Registered');
+        _loggedInStatus = Status.Registered;
         return true;
     }
+    _loggedInStatus = Status.ServerError;
     return false;
   }  
 
-  void login(String email, String password) async {
+  Future<bool> login(String email, String password) async {
       Response? response;
 
       try{
@@ -60,11 +72,13 @@ class AuthProvider extends ChangeNotifier{
         },
         body: jsonEncode(<String, String>{
           'username': email,
+          // 'password': Crypt.sha256(password).toString(),
           'password': password,
         }),
         );
       }catch(e){
         print('Error ' + e.toString());
+        return false;
       }
     
       if(response?.statusCode == 200){
@@ -76,9 +90,11 @@ class AuthProvider extends ChangeNotifier{
         UserPreferences().saveUser(authUser);
         _loggedInStatus = Status.LoggedIn;
         notifyListeners();
+        return true;
       }else{
         _loggedInStatus = Status.NotLoggedIn;
         notifyListeners();
+        return false;
       }
 
   }

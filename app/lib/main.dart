@@ -1,10 +1,12 @@
 import 'package:app/Providers/user_provider.dart';
+import 'package:app/Screens/Register.dart';
 import 'package:flutter/material.dart'; 
 import 'package:app/Screens/Login.dart';
 import 'package:app/Screens/Home.dart';
 import 'package:app/Screens/Group.dart'; 
 import 'package:app/Screens/Settings.dart';
 import 'package:app/Screens/Personal.dart';
+import 'package:app/Screens/Register.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Providers/auth_provider.dart';
 
@@ -29,6 +31,7 @@ class MyApp extends StatelessWidget {
         '/group': (context) => Group(),
         '/settings': (context) => Settings(),
         '/personal': (context) => Personal(),
+        '/register': (context) => Register(),
       }, 
     )
     );
