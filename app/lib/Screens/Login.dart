@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart'; 
 import 'package:form_field_validator/form_field_validator.dart'; 
 import 'package:app/Utils/loginUtil.dart';
-  
+import 'package:app/Providers/auth_provider.dart';
+import 'package:provider/provider.dart';
+
 class Login extends StatefulWidget { 
   const Login({Key? key}) : super(key: key); 
   
@@ -11,11 +13,13 @@ class Login extends StatefulWidget {
   
 class _LoginState extends State<Login> { 
   final _formkey = GlobalKey<FormState>(); 
-   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   Map<String, String> userData = {};
+
   @override 
   Widget build(BuildContext context) { 
+
     return Scaffold( 
       appBar: AppBar( 
         title: Text('Login'), 
