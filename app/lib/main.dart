@@ -6,9 +6,7 @@ import 'package:app/Screens/Home.dart';
 import 'package:app/Screens/Group.dart'; 
 import 'package:app/Screens/Settings.dart';
 import 'package:app/Screens/Personal.dart';
-import 'package:app/Screens/ChangePassword.dart';
-import 'package:app/Screens/ChangeUsername.dart';
-import 'package:app/Screens/GroupInvites.dart';
+import 'package:app/Screens/Register.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Providers/auth_provider.dart';
 
@@ -26,8 +24,7 @@ class MyApp extends StatelessWidget {
     ],
     child: MaterialApp(
       title: 'OnCash',
-      debugShowCheckedModeBanner: false,
-      initialRoute: '/',
+      initialRoute: '/login',
       routes: {
         '/login': (context) => Login(),
         '/': (context) => Home(),
@@ -35,9 +32,6 @@ class MyApp extends StatelessWidget {
         '/settings': (context) => Settings(),
         '/personal': (context) => Personal(),
         '/register': (context) => Register(),
-        '/change_username': (context) => ChangeUsername(),
-        '/change_password': (context) => ChangePassword(),
-        '/group_invites': (context) => GroupInvites(),
       }, 
     )
     );

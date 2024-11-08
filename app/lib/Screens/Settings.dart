@@ -10,14 +10,6 @@ class Settings extends StatefulWidget {
 
 class _SettingsState extends State<Settings>{
 
-  //Sample invites count change with logic later
-  int inviteCount = 3;
-
-  void _logout() {
-    // TODO add logic
-    Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -26,70 +18,20 @@ class _SettingsState extends State<Settings>{
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 30.0, horizontal: 20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            ListTile(
-              leading: const Icon(Icons.person),
-              title: const Text("Change username"),
-              onTap: () {
-                Navigator.pushNamed(context, '/change_username');
-                },
-            ),
-            Divider(),
-            ListTile(
-              leading: const Icon(Icons.lock),
-              title: const Text("Change password"),
-              onTap: () {
-                Navigator.pushNamed(context, '/change_password');
-                },
-            ),
-            Divider(),
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: Row(
-                children: [
-                  const Text('Group Invites'),
-                  inviteCount > 0
-                   ? Padding(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
-                        ),
-                        child: Text(
-                          '$inviteCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ) : Container(),
-                ],
+      body: Column(
+        children: <Widget>[
+          Padding(
+            padding: const EdgeInsets.only(top: 30.0),
+            child: Center(
+              child: Container(
+                width: 200,
+                height: 100,
+                child: const Text('Settings Screen'),
               ),
-              onTap: () {
-                Navigator.pushNamed(context, '/group_invites');
-              },
-            ),
-            Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: Text("Logout"),
-              onTap: _logout,
             )
-          ],
-        ),
-      )
+          ),
+        ],
+      ),
     );
 
   }
