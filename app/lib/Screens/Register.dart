@@ -104,10 +104,10 @@ class _RegisterState extends State<Register> {
                                     errorText: 'Please enter Password'), 
                                 MinLengthValidator(8, 
                                     errorText: 
-                                        'Password must be atlist 8 digit'), 
+                                        'Password must be atlist 8 digits'), 
                                 PatternValidator(r'(?=.*?[#!@$%^&*-])', 
                                     errorText: 
-                                        'Password must be atlist one special character') 
+                                        'Password must contain atlist one special character') 
                               ]).call,
                               decoration: const InputDecoration( 
                                 hintText: 'Password', 

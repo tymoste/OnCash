@@ -181,9 +181,11 @@ class _ChangeUsernameState extends State<ChangeUsername> {
                             ),
                               onPressed: () async { 
                                 if (_formkey.currentState!.validate()) {  
-                                  if(await authProvider.changeUsername(_nameController.text, _passwordController.text)){
-                                    Navigator.pushReplacementNamed(context, '/change_username');
+                                  userData.then((data) async {
+                                    if(await authProvider.changeUsername(data.jwt, _nameController.text, _passwordController.text)){
+                                      Navigator.pushReplacementNamed(context, '/change_username');
                                   }
+                                  });
                                 }
                                 else {
                                   showDialog(

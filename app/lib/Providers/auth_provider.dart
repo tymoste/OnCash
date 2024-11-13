@@ -13,7 +13,10 @@ enum Status {
   NotLoggedIn,
   UserExists,
   Registered,
-  ServerError
+  ServerError,
+  UsernameAlreadyExists,
+  PasswordAlreadyExists,
+
 }
 
 class AuthProvider extends ChangeNotifier{
@@ -21,14 +24,14 @@ class AuthProvider extends ChangeNotifier{
 
   Status get loggedInStatus => _loggedInStatus;
 
+  set loggedInStatus(Status value){
+    _loggedInStatus = value;
+  }
+
   static const loginApiEndpoint = 'http://46.41.136.84:5000/login';
   static const registerApiEndpoint = 'http://46.41.136.84:5000/register';
   static const changeUsernameApiEndpoint = 'http://46.41.136.84:5000/change_username';
   static const changePasswordApiEndpoint = 'http://46.41.136.84:5000/change_password';
-
-  set loggedInStatus(Status value){
-    _loggedInStatus = value;
-  }
 
   Future<bool> register(String email, String password, String userName) async {
     Response? response;
@@ -89,6 +92,7 @@ class AuthProvider extends ChangeNotifier{
         print(responseData);
 
         User authUser = User.fromJson(responseData);
+        print(authUser.toString());
         UserPreferences().saveUser(authUser);
         _loggedInStatus = Status.LoggedIn;
         notifyListeners();
@@ -100,7 +104,7 @@ class AuthProvider extends ChangeNotifier{
       }
   }
 
-  Future<bool> changeUsername(String newName, String password) async{
+  Future<bool> changeUsername(String jwt, String newUsername, String password) async{
     Response? response;
 
     try{
@@ -109,7 +113,8 @@ class AuthProvider extends ChangeNotifier{
         'Content-Type' : 'application/json; charset=UTF-8',
       },
       body: jsonEncode(<String, String>{
-        'username': newName,
+        'jwt': jwt,
+        'newUsername': newUsername,
         // 'password': Crypt.sha256(password).toString(),
         'password': password,
       }),
@@ -121,14 +126,13 @@ class AuthProvider extends ChangeNotifier{
   
     if(response?.statusCode == 200){
       //actualise to SharedPreferences
-      final Map<String, dynamic> responseData = json.decode(response!.body);
-      print(responseData);
 
-      // w sumie nie jestem pewien tego fragmentu
-      // zamysl byl taki, zeby podmienic username uzytkownika
-      User actualisedUser = User.fromJson(responseData);
-      User prevUser = UserPreferences().getUser() as User;
-      prevUser.userName = actualisedUser.userName;
+      UserPreferences().changeUsername(newUsername);
+      //final Map<String, dynamic> responseData = json.decode(response!.body);
+      //print(responseData);
+      //User actualisedUser = User.fromJson(responseData);
+      //User prevUser = UserPreferences().getUser() as User;
+      //prevUser.userName = actualisedUser.userName;
       notifyListeners();
       return true;
     }else{
@@ -137,4 +141,33 @@ class AuthProvider extends ChangeNotifier{
     }
   }
 
+  Future<bool> changePassword(String jwt, String oldPassword, String newPassword) async{
+    Response? response;
+
+    try{
+      response = await http.post(Uri.parse(changePasswordApiEndpoint),
+      headers: <String, String>{
+        'Content-Type' : 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'jwt': jwt,
+        'oldPassword': oldPassword,
+        // 'password': Crypt.sha256(password).toString(),
+        'newPassword': newPassword,
+      }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      return false;
+    }
+  
+    if(response?.statusCode == 200){
+      UserPreferences().changePassword(newPassword);
+      notifyListeners();
+      return true;
+    }else{
+      notifyListeners();
+      return false;
+    }
+  }
 }

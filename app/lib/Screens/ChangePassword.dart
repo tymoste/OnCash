@@ -4,6 +4,9 @@ import 'package:form_field_validator/form_field_validator.dart';
 import 'package:app/Providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
+import '../Models/user.dart';
+import '../Utils/shared_preference.dart';
+
 class ChangePassword extends StatefulWidget {
   const ChangePassword({super.key});
 
@@ -17,7 +20,14 @@ class _ChangePasswordState extends State<ChangePassword> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _newpasswordRepeatController = TextEditingController();
   final TextEditingController _currentPasswordController = TextEditingController();
-  Map<String, String> userData = {};
+  //Map<String, String> userData = {};
+  late Future<User> userData;
+
+  @override
+  void initState() {
+    super.initState();
+    userData = UserPreferences().getUser();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -142,11 +152,11 @@ class _ChangePasswordState extends State<ChangePassword> {
                             ),
                               onPressed: () async { 
                                 if (_formkey.currentState!.validate()) {  
-                                  // tu nie jestem pewien czy to powinno byc UserProvider().user.userName
-                                  var res = await authProvider.changeUsername(UserProvider().user.userName, _newPasswordController.text);
-                                  if(res == true){
-                                    Navigator.pushReplacementNamed(context, '/change_password');
-                                  }
+                                  userData.then((data) async {
+                                    if(await authProvider.changePassword(data.jwt, _currentPasswordController.text, _newPasswordController.text)){
+                                      Navigator.pushReplacementNamed(context, '/change_password');
+                                    };
+                                  });
                                 }
                                 else {
                                   showDialog(
