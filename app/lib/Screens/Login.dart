@@ -163,13 +163,21 @@ class _LoginState extends State<Login> {
                                 padding: EdgeInsets.fromLTRB(0, 20, 0, 0), 
                                 child: Row( 
                                   children: [ 
-                                    Container( 
-                                      height: 40, 
-                                      width: 40, 
-                                      child: Image.asset( 
-                                        'lib/assets/google.png', 
-                                        fit: BoxFit.cover, 
-                                      ), 
+                                    GestureDetector(
+                                      onTap: () async {
+                                        await authProvider.googleLogin();
+                                        if(authProvider.loggedInStatus == Status.GoogleLoggedIn){
+                                          Navigator.pushReplacementNamed(context, '/');
+                                        }
+                                      },
+                                      child: Container( 
+                                        height: 40, 
+                                        width: 40, 
+                                        child: Image.asset( 
+                                          'lib/assets/google.png', 
+                                          fit: BoxFit.cover, 
+                                        ), 
+                                      ),
                                     ), 
                                   ], 
                                 ), 

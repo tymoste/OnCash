@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:app/Models/user.dart';
@@ -16,11 +17,13 @@ enum Status {
   ServerError,
   UsernameAlreadyExists,
   PasswordAlreadyExists,
+  GoogleLoggedIn,
 
 }
 
 class AuthProvider extends ChangeNotifier{
   Status _loggedInStatus = Status.NotLoggedIn;
+  final GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email', 'profile', 'openid'], serverClientId: '719312073145-do6sme7t3nbus7ld4j1ld3ksuo2ass6i.apps.googleusercontent.com'); //WEB ACCESS TOKEN WTF?
 
   Status get loggedInStatus => _loggedInStatus;
 
@@ -170,4 +173,50 @@ class AuthProvider extends ChangeNotifier{
       return false;
     }
   }
+
+
+  //-----------------------GOOGLE LOGIN METHODS-----------------------
+  Future<bool> googleLogin() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if(googleUser == null){
+        //login canceled
+        return false;
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+
+      final String? email = googleUser.email;
+      final String? name = googleUser.displayName;
+      final String? idToken = googleAuth.idToken;
+
+      // TODO: SEND DATA TO SERVER HERE!!! NOT IMPLEMENTED YET
+       final response = await http.post(
+        Uri.parse('http://46.41.136.84:5000/google_test'), // Możesz potrzebować osobnego endpointu
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'token': idToken ?? '', // Token Google do weryfikacji
+        }),
+      );
+
+      print("Email: $email, name: $name, Token: $idToken");
+      _loggedInStatus = Status.GoogleLoggedIn;
+      return true;
+
+
+    } catch (error) {
+      print("Error during Google login: $error");
+      _loggedInStatus = Status.NotLoggedIn;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<void> googleLogout() async {
+    await _googleSignIn.signOut();
+    _loggedInStatus = Status.NotLoggedIn;
+    notifyListeners();
+  }
+
 }

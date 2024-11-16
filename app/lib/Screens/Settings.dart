@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:app/Providers/auth_provider.dart';
 
 class Settings extends StatefulWidget { 
   const Settings({Key? key}) : super(key: key); 
@@ -14,6 +16,8 @@ class _SettingsState extends State<Settings> {
   int inviteCount = 3;
 
   void _logout() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.googleLogout();
     // TODO add logout logic
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
