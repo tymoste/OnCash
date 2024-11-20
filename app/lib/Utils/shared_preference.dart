@@ -22,6 +22,8 @@ class UserPreferences {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('username', username);
   }
+  //????? WHAT IS THAT ?????
+  //WE CANNOT STORE THE PASSWORD
   void changePassword(String newPassword) async{
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     prefs.setString('password', newPassword);

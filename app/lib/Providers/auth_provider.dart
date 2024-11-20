@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 import 'package:app/Models/user.dart';
 import 'package:app/Utils/shared_preference.dart';
 import 'package:crypt/crypt.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum Status {
   LoggedIn,
@@ -35,6 +36,7 @@ class AuthProvider extends ChangeNotifier{
   static const registerApiEndpoint = 'http://46.41.136.84:5000/register';
   static const changeUsernameApiEndpoint = 'http://46.41.136.84:5000/change_username';
   static const changePasswordApiEndpoint = 'http://46.41.136.84:5000/change_password';
+  static const googleLoginEndpoint = 'http://46.41.136.84:5000/google_test';
 
   Future<bool> register(String email, String password, String userName) async {
     Response? response;
@@ -45,8 +47,8 @@ class AuthProvider extends ChangeNotifier{
       },
       body: jsonEncode(<String, String>{
         'username': userName,
-        // 'password': Crypt.sha256(password).toString(),
-        'password': password,
+        'password': Crypt.sha256(password, rounds: 0, salt: '').toString(),
+        // 'password': password,
         'email' : email,
       }),
       );
@@ -56,13 +58,13 @@ class AuthProvider extends ChangeNotifier{
       return false;
     }
 
-    if(response?.statusCode == 400){
+    if(response.statusCode == 400){
       //todo
       _loggedInStatus = Status.UserExists;
       return false;
     }
 
-    if(response?.statusCode == 200){
+    if(response.statusCode == 200){
         _loggedInStatus = Status.Registered;
         return true;
     }
@@ -80,8 +82,8 @@ class AuthProvider extends ChangeNotifier{
         },
         body: jsonEncode(<String, String>{
           'username': email,
-          // 'password': Crypt.sha256(password).toString(),
-          'password': password,
+          'password': Crypt.sha256(password, rounds: 0, salt: '').toString(),
+          // 'password': password,
         }),
         );
       }catch(e){
@@ -107,6 +109,12 @@ class AuthProvider extends ChangeNotifier{
       }
   }
 
+  Future<void> logout() async {
+    final SharedPreferences sp = await SharedPreferences.getInstance();
+    sp.clear();
+    notifyListeners();
+  }
+
   Future<bool> changeUsername(String jwt, String newUsername, String password) async{
     Response? response;
 
@@ -118,8 +126,8 @@ class AuthProvider extends ChangeNotifier{
       body: jsonEncode(<String, String>{
         'jwt': jwt,
         'newUsername': newUsername,
-        // 'password': Crypt.sha256(password).toString(),
-        'password': password,
+        'password': Crypt.sha256(password, rounds: 0, salt: '').toString(),
+        // 'password': password,
       }),
       );
     }catch(e){
@@ -128,7 +136,7 @@ class AuthProvider extends ChangeNotifier{
     }
   
     if(response?.statusCode == 200){
-      //actualise to SharedPreferences
+      //update to SharedPreferences
 
       UserPreferences().changeUsername(newUsername);
       //final Map<String, dynamic> responseData = json.decode(response!.body);
@@ -154,9 +162,9 @@ class AuthProvider extends ChangeNotifier{
       },
       body: jsonEncode(<String, String>{
         'jwt': jwt,
-        'oldPassword': oldPassword,
+        'oldPassword': Crypt.sha256(oldPassword, rounds: 0, salt: '').toString(),
         // 'password': Crypt.sha256(password).toString(),
-        'newPassword': newPassword,
+        'newPassword': Crypt.sha256(newPassword, rounds: 0, salt: '').toString(),
       }),
       );
     }catch(e){
@@ -165,7 +173,7 @@ class AuthProvider extends ChangeNotifier{
     }
   
     if(response?.statusCode == 200){
-      UserPreferences().changePassword(newPassword);
+      UserPreferences().changePassword(newPassword); //WTF IS THAT? GET RID OF THAT!
       notifyListeners();
       return true;
     }else{
@@ -191,7 +199,7 @@ class AuthProvider extends ChangeNotifier{
 
       // TODO: SEND DATA TO SERVER HERE!!! NOT IMPLEMENTED YET
        final response = await http.post(
-        Uri.parse('http://46.41.136.84:5000/google_test'), // Możesz potrzebować osobnego endpointu
+        Uri.parse(googleLoginEndpoint), // Możesz potrzebować osobnego endpointu
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -200,8 +208,18 @@ class AuthProvider extends ChangeNotifier{
         }),
       );
 
+
+      //Get from server if token is valid and maybe if we need another token get it into prefs not this token from Google signIn!
+      if(response.statusCode == 200){
+        final SharedPreferences sp = await SharedPreferences.getInstance();
+        sp.setString('email', email!);
+        sp.setString('username', name!);
+        sp.setString("jwt", idToken!); //Change this if needed, check on server and documentation
+      }
+
       print("Email: $email, name: $name, Token: $idToken");
       _loggedInStatus = Status.GoogleLoggedIn;
+      notifyListeners();
       return true;
 
 

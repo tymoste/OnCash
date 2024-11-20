@@ -17,8 +17,12 @@ class _SettingsState extends State<Settings> {
 
   void _logout() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.googleLogout();
-    // TODO add logout logic
+    if(authProvider.loggedInStatus == Status.GoogleLoggedIn){
+      authProvider.googleLogout();
+    }
+    else if(authProvider.loggedInStatus == Status.LoggedIn){
+      authProvider.logout();
+    }
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
   }
 
