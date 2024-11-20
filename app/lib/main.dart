@@ -12,6 +12,7 @@ import 'package:app/Screens/Personal.dart';
 import 'package:app/Screens/Register.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Providers/auth_provider.dart';
+import 'package:app/Providers/group_expences_provider.dart';
 
 void main(){
   runApp(MyApp());
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(providers: [
       ChangeNotifierProvider(create: (_) => AuthProvider()),
       ChangeNotifierProvider(create: (_) => UserProvider()),
+      ChangeNotifierProvider(create: (_) => GroupExpencesProvider()),
     ],
     child: MaterialApp(
       title: 'OnCash',

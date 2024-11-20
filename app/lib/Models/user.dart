@@ -13,4 +13,8 @@ class User{
     );
   }
 
+  String getJwt(){
+    return jwt;
+  }
+
 }
