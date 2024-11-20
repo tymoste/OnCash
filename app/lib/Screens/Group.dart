@@ -1,3 +1,4 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart'; 
 
 class Group extends StatefulWidget { 
@@ -18,21 +19,48 @@ class _GroupState extends State<Group>{
         centerTitle: true,
         automaticallyImplyLeading: false,
       ),
-      body: Column(
-        children: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(top: 30.0),
-            child: Center(
-              child: Container(
-                width: 200,
-                height: 100,
-                child: const Text('Group Screen'),
-              ),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.only(top: 30.0),
+          child: Center(
+
+            child: Stack(
+              alignment: Alignment.center,
+
+
+              children: [
+                const Text("3000\$"),
+
+                SizedBox(
+                  width: 200.0,
+                  height: 300.0,
+                  child: PieChart(
+                    //
+                    swapAnimationDuration: const Duration(milliseconds: 750),
+                    swapAnimationCurve: Curves.easeInOutQuint,
+                    PieChartData(
+                      sections: [
+                        PieChartSectionData(
+                          value: 1,
+                          color: Colors.blueAccent,
+                        ),
+                        PieChartSectionData(
+                          value: 2,
+                          color: Colors.amberAccent,
+                        ),
+                        PieChartSectionData(
+                          value: 5,
+                          color: Colors.cyanAccent,
+                        )
+                      ]
+                    ),
+                  ),
+                )
+              ],
             )
-          ),
-        ],
+          )  
+        )
       ),
     );
-
   }
 }
