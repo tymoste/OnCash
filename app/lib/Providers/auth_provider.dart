@@ -215,10 +215,9 @@ class AuthProvider extends ChangeNotifier{
 
       //Get from server if token is valid and maybe if we need another token get it into prefs not this token from Google signIn!
       if(response.statusCode == 200){
-        final SharedPreferences sp = await SharedPreferences.getInstance();
-        sp.setString('email', email!);
-        sp.setString('username', name!);
-        sp.setString("jwt", idToken!); //Change this if needed, check on server and documentation
+        final Map<String, dynamic> responseData = json.decode(response!.body);
+        User authUser = User.fromJson(responseData);
+        UserPreferences().saveUser(authUser);
       }
 
       print("Email: $email, name: $name, Token: $idToken");

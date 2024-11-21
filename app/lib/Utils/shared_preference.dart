@@ -37,6 +37,7 @@ class GroupPreferences {
       'id': group.id,
       'name': group.name,
       'private': group.private,
+      'img': group.base64Img
     })).toList();
 
     // Save the list of JSON strings as a single string
@@ -50,6 +51,7 @@ class GroupPreferences {
       'id': privateGroup.id,
       'name': privateGroup.name,
       'private': privateGroup.private,
+      'img': ''
     });
     prefs.setString('privateGroup', group);
   }

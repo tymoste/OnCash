@@ -7,7 +7,8 @@ import 'package:app/Screens/Register.dart';
 import 'package:flutter/material.dart'; 
 import 'package:app/Screens/Login.dart';
 import 'package:app/Screens/Home.dart';
-import 'package:app/Screens/Group.dart'; 
+import 'package:app/Screens/Group.dart';
+import 'package:app/Screens/CreateGroup.dart'; 
 import 'package:app/Screens/Settings.dart';
 import 'package:app/Screens/Personal.dart';
 import 'package:app/Screens/Register.dart';
@@ -42,6 +43,7 @@ class MyApp extends StatelessWidget {
         '/change_password': (context) => ChangePassword(),
         '/group_invites': (context) => GroupInvites(),
         '/group_details': (context) => Group(),
+        '/create_group' : (context) => GroupCreate(),
       }, 
     )
     );

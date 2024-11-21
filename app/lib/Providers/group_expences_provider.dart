@@ -53,6 +53,9 @@ class GroupExpencesProvider extends ChangeNotifier{
           GroupPreferences().savePrivateGroup(privateGroup);
 
           notifyListeners();
+          print('kurwa');
+          print(response.body);
+          print(privateGroup.name);
           return true;
         }
     }
@@ -60,20 +63,22 @@ class GroupExpencesProvider extends ChangeNotifier{
     return false;
   } 
 
-  Future<bool> createGroup(String jwt, String groupName) async{
+  Future<bool> createGroup(String jwt, String groupName, File groupImg) async{
 
-    Response? response;
+    var response;
+    var request = http.MultipartRequest(
+      'POST',
+      Uri.parse(createGroupApiEndpoint),
+    );
+    request.fields['jwt'] = jwt;
+    request.fields['name'] = groupName;
+    request.files.add(await http.MultipartFile.fromPath(
+      'file',
+      groupImg.path,
+    ));
 
     try{
-      response = await http.post(Uri.parse(createGroupApiEndpoint),
-        headers: <String, String>{
-          'Content-Type' : 'application/json; charset=UTF-8',
-        },
-        body: jsonEncode(<String, String>{
-          'jwt': jwt,
-          'name': groupName,
-        }),
-      );
+      response = await request.send();
 
     }catch(e){
       print('Error ' + e.toString());

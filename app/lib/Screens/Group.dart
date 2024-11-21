@@ -17,7 +17,6 @@ class _GroupState extends State<Group>{
       appBar: AppBar(
         title: Text('Group Name'),
         centerTitle: true,
-        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         child: Padding(

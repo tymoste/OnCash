@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:app/Models/group.dart';
 import 'package:app/Utils/shared_preference.dart';
@@ -48,17 +50,24 @@ class _GroupListScreenState extends State<GroupListScreen> {
 
             return ListView.builder(
               itemCount: groups.length,
-              itemBuilder: (context, index) { //Individual element
+              itemBuilder: (context, index) {
                 Group group = groups[index];
                 return ListTile(
-                  title: Text(group.name), // Display group name
+                  leading: ClipOval(
+                    child: Image.memory(
+                      base64Decode(group.base64Img),
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  title: Text(group.name),
                   trailing: ElevatedButton(
                     onPressed: () {
-                      // Navigate to specific group with its id
                       Navigator.pushNamed(
                         context,
                         '/group_details',
-                        arguments: group.id, // Pass the group id as argument
+                        arguments: group.id,
                       );
                     },
                     child: Text('Go'),

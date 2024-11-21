@@ -65,6 +65,7 @@ class _PersonalState extends State<Personal> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return Center(child: CircularProgressIndicator());
               } else if (snapshot.hasError) {
+                print(snapshot.error.toString());
                 return Center(child: Text('Error loading private group data'));
               } else if (!snapshot.hasData) {
                 return Center(child: Text('No private group data available'));
