@@ -66,8 +66,11 @@ class _GroupListScreenState extends State<GroupListScreen> {
                     onPressed: () {
                       Navigator.pushNamed(
                         context,
-                        '/group_details',
-                        arguments: group.id,
+                        '/group_spendings',
+                        arguments: {
+                          "group_id": group.id,
+                          "group_name": group.name,
+                        },
                       );
                     },
                     child: Text('Go'),

@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
     ],
     child: MaterialApp(
       title: 'OnCash',
-      initialRoute: '/login', //
+      initialRoute: '/group_spendings', //login
       routes: {
         '/login': (context) => Login(),
         '/': (context) => Home(),
@@ -42,7 +42,7 @@ class MyApp extends StatelessWidget {
         '/change_username': (context) => ChangeUsername(),
         '/change_password': (context) => ChangePassword(),
         '/group_invites': (context) => GroupInvites(),
-        '/group_details': (context) => Group(),
+        '/group_spendings': (context) => const Group(),
         '/create_group' : (context) => GroupCreate(),
       }, 
     )
