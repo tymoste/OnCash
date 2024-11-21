@@ -10,6 +10,7 @@ import 'package:app/Models/group.dart';
 class GroupExpencesProvider extends ChangeNotifier{
 
   static const getGroupsApiEndpoint = 'http://46.41.136.84:5000/get_groups';
+  static const createGroupApiEndpoint = 'http://46.41.136.84:5000/create_group';
 
   Future<bool> getUserGroups(String jwt) async {
 
@@ -58,5 +59,35 @@ class GroupExpencesProvider extends ChangeNotifier{
     notifyListeners();
     return false;
   } 
+
+  Future<bool> createGroup(String jwt, String groupName) async{
+
+    Response? response;
+
+    try{
+      response = await http.post(Uri.parse(createGroupApiEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+          'name': groupName,
+        }),
+      );
+
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200) {
+      notifyListeners();
+      return true;
+    }
+
+    notifyListeners();
+    return false;
+  }
 
 }

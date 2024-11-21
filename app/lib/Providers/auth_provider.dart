@@ -178,7 +178,6 @@ class AuthProvider extends ChangeNotifier{
     }
   
     if(response?.statusCode == 200){
-      UserPreferences().changePassword(newPassword); //WTF IS THAT? GET RID OF THAT!
       notifyListeners();
       return true;
     }else{
@@ -224,6 +223,10 @@ class AuthProvider extends ChangeNotifier{
 
       print("Email: $email, name: $name, Token: $idToken");
       _loggedInStatus = Status.GoogleLoggedIn;
+
+      //Get groups from server
+      await GroupExpencesProvider().getUserGroups(idToken!);
+      
       notifyListeners();
       return true;
 

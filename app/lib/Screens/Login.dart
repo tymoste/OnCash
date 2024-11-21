@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:form_field_validator/form_field_validator.dart'; 
 import 'package:app/Providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-import 'package:app/Providers/group_expences_provider.dart';
-import 'package:app/Models/user.dart';
-import 'package:app/Utils/shared_preference.dart';
 
 class Login extends StatefulWidget { 
   const Login({Key? key}) : super(key: key); 
@@ -22,7 +19,6 @@ class _LoginState extends State<Login> {
   @override 
   Widget build(BuildContext context) { 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final groupExpencesProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
 
     return Scaffold( 
       appBar: AppBar( 

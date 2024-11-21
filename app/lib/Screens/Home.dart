@@ -1,3 +1,4 @@
+import 'package:app/Screens/GroupList.dart';
 import 'package:flutter/material.dart';
 import 'package:app/Screens/Group.dart'; 
 import 'package:app/Screens/Settings.dart';
@@ -19,7 +20,7 @@ class _HomeState extends State<Home>{
     // final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>;
     final List<Widget> _screens = [
       const Personal(),
-      const Group(),
+      const GroupListScreen(),
       const Settings(),
     ];
 
