@@ -27,7 +27,7 @@ class MyApp extends StatelessWidget {
     ],
     child: MaterialApp(
       title: 'OnCash',
-      initialRoute: '/login',
+      initialRoute: '/login', //
       routes: {
         '/login': (context) => Login(),
         '/': (context) => Home(),
