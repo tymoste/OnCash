@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:app/Providers/group_expences_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart';
@@ -99,6 +100,10 @@ class AuthProvider extends ChangeNotifier{
         User authUser = User.fromJson(responseData);
         print(authUser.toString());
         UserPreferences().saveUser(authUser);
+
+        //Get groups from server
+        await GroupExpencesProvider().getUserGroups(authUser.jwt);
+
         _loggedInStatus = Status.LoggedIn;
         notifyListeners();
         return true;
