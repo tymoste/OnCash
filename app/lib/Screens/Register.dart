@@ -168,9 +168,9 @@ class _RegisterState extends State<Register> {
                                   onPressed: () async { 
                                   var res;
                                   if (_formkey.currentState!.validate()) {  
-                                  var res = await authProvider.register(_emailController.text, _passwordController.text,_nameController.text);
+                                    var res = await authProvider.register(_emailController.text, _passwordController.text,_nameController.text);
                                   if(res == true)
-                                  Navigator.pushReplacementNamed(context, '/login');
+                                    Navigator.pushReplacementNamed(context, '/login');
                                   }
                                   else {
                                     showDialog(

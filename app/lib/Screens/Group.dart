@@ -1,5 +1,13 @@
+import 'package:app/Providers/auth_provider.dart';
+import 'package:app/Providers/group_expences_provider.dart';
+import 'package:app/Screens/ManageUsersInGroup.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:flutter/material.dart'; 
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:app/Providers/group_expences_provider.dart';
+
+import '../Models/user.dart';
+import '../Utils/shared_preference.dart';
 
 class GroupSpendingsScreenArguments {
   final String group_id;
@@ -10,11 +18,12 @@ class GroupSpendingsScreenArguments {
 
 class Group extends StatefulWidget { 
   //final int group_id;
-
-  const Group({Key? key}) : super(key: key);
+  
+  const Group({super.key});
   
   //required this.group_id
   //Group({required this.group_id})
+  
 
   @override 
   State<Group> createState() => _GroupState(); 
@@ -22,15 +31,68 @@ class Group extends StatefulWidget {
 
 class _GroupState extends State<Group>{
   int touchedIndex = -1;
+  late Future<User> userData;
   static const routeName = '/group_spendings';
+
+  @override
+  void initState() {
+    super.initState();
+    userData = UserPreferences().getUser();
+  }
+
+
   @override
   Widget build(BuildContext context) {
-    final args = ModalRoute.of(context)!.settings.arguments; //as GroupSpendingsScreenArguments;
-  
+    var args = ModalRoute.of(context)!.settings.arguments; //as GroupSpendingsScreenArguments;
+
+    if (args == null) {
+      // Obsługa przypadku, gdy args jest null
+      return Scaffold(
+        appBar: AppBar(title: Text('Group Screen')),
+        body: Center(
+          child: Text('Brak przekazanych argumentów'),
+        ),
+      );
+    }
+    args = args as Map<String, dynamic>;
+    String group_id = args['group_id'].toString();
+    String group_name = args['group_name'].toString();
+
+    //print(args.toString());
+    final groupExpencesProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(args.toString()), //widget.group_id as String
+        title: Text(group_name), //widget.group_id as String
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.group),
+            onPressed: () async {
+
+              // var res;
+              //if (_formkey.currentState!.validate()) {  
+                // userData.then((data) async {
+                //   args = args as Map<String, dynamic>;
+                //   var res = await groupExpencesProvider.getUsersInGroupFromServer(
+                //     data.jwt,
+                //     group_id,
+                //   );
+                // });
+              // if(res == true)
+                // print(res);
+                Navigator.pushReplacementNamed(
+                  context,
+                  '/get_users_in_group',
+                  arguments: {
+                    "group_id": group_id,
+                    "group_name": group_name,
+                  },
+                );
+              // }
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Padding(

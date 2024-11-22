@@ -3,6 +3,7 @@ import 'package:app/Screens/ChangePassword.dart';
 import 'package:app/Screens/ChangeUsername.dart';
 import 'package:app/Screens/GroupInvites.dart';
 import 'package:app/Screens/GroupList.dart';
+import 'package:app/Screens/ManageUsersInGroup.dart';
 import 'package:app/Screens/Register.dart';
 import 'package:flutter/material.dart'; 
 import 'package:app/Screens/Login.dart';
@@ -44,6 +45,7 @@ class MyApp extends StatelessWidget {
         '/group_invites': (context) => GroupInvites(),
         '/group_spendings': (context) => const Group(),
         '/create_group' : (context) => GroupCreate(),
+        '/get_users_in_group' : (context) => Manageusersingroup(),
       }, 
     )
     );

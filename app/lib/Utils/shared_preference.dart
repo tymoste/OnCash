@@ -36,13 +36,40 @@ class GroupPreferences {
     List<String> groupsJson = groups.map((group) => json.encode({
       'id': group.id,
       'name': group.name,
-      'private': group.private,
+      'private': group.private, // o co chodzi? XDDD
       'img': group.base64Img
     })).toList();
 
     // Save the list of JSON strings as a single string
     prefs.setStringList('groups', groupsJson);
   }
+
+  //save users to public group (for now done as global variable in group expences provider)
+  // todo: implementation of flutter_secure_storage
+  
+  // Future<Group> saveUsersToPublicGroup(String groupId, List<User> users) async {
+  //   final SharedPreferences prefs = await SharedPreferences.getInstance();
+
+  //   // Get the list of JSON strings stored in SharedPreferences
+  //   List<String>? groupsJson = await prefs.getStringList('groups');
+
+  //   if (groupsJson == null) {
+  //     print("there is no groups availibile");
+  //   }
+  //     // Convert the list of JSON strings back to a list of Group objects
+  //   List<Group> groups = groupsJson
+  //       !.map((jsonString) => Group.fromJson(json.decode(jsonString)))
+  //       .toList();
+
+  //   for (Group group in groups) {
+  //     print(group.id);
+  //     if(group.id == groupId){
+
+  //     }
+
+  //   }
+  //   return 
+  // }
 
   // Save private group to Shared Preferences
   void savePrivateGroup(Group privateGroup) async {
@@ -80,5 +107,7 @@ class GroupPreferences {
     String privateGroup = prefs.getString('privateGroup') ?? '';
     return Group.fromJson(json.decode(privateGroup));
   }
+
+
 
 }
