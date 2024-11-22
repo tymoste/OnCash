@@ -15,9 +15,82 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const getGroupsApiEndpoint = 'http://46.41.136.84:5000/get_groups';
   static const createGroupApiEndpoint = 'http://46.41.136.84:5000/create_group';
   static const getUsersInGroupApiEndpoint = 'http://46.41.136.84:5000/get_users';
-  
+  static const addUserToGroupApiEndpoint = 'http://46.41.136.84:5000/invite';
+  static const getInvitesApiEndpoint = 'http://46.41.136.84:5000/get_invites';
+
+  late List<Map<String, dynamic>> _invites = [];
+  List<Map<String, dynamic>> get invites => _invites;
+
   late List<otherUser> _users = [];
   List<otherUser> get users => _users;
+
+
+  Future<bool> getGroupInvites(String jwt) async {
+    try {
+      final response = await http.post(
+        Uri.parse(getInvitesApiEndpoint),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+
+        if (responseData["error"] == "no error") {
+          // Creating list of pending invites
+          List<dynamic> invitesList = responseData['invites'];
+          _invites = invitesList.map((invite) => invite as Map<String, dynamic>).toList();
+          notifyListeners();
+          return true;
+        } else {
+          print('Server error: ${responseData["error"]}');
+          return false;
+        }
+      } else {
+        print('Failed to fetch invites: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error fetching invites: $e');
+      return false;
+    }
+  }
+
+
+  Future<bool> addUserToGroup(String jwt, String groupId, String email) async {
+
+    try {
+      final response = await http.post(
+        Uri.parse(addUserToGroupApiEndpoint),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+          'group_id': groupId,
+          'email': email,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Update the user list
+        print("\n\n\n\n\n\n${response.body}\n\n\n\n\n");
+        await getUsersInGroupFromServer(jwt, groupId);
+        notifyListeners();
+        return true;
+      } else {
+        print('Failed to add user: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error adding user to group: $e');
+      return false;
+    }
+  }
 
   Future<bool> getUserGroups(String jwt) async {
 
@@ -142,11 +215,5 @@ class GroupExpencesProvider extends ChangeNotifier{
     notifyListeners();
     return false;
   }
-
-
-
-  // Future<List<User>> getUsersInGroup() async{
-  //   return users;
-  // }
 
 }

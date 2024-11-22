@@ -23,7 +23,56 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
   void initState() {
     super.initState();
     _userData = UserPreferences().getUser();
-   
+  }
+
+  Future<void> _showAddUserDialog(BuildContext context, String groupId) async {
+    final TextEditingController emailController = TextEditingController();
+
+    return showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add User to Group'),
+          content: TextField(
+            controller: emailController,
+            decoration: const InputDecoration(
+              labelText: 'Enter user email',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final email = emailController.text.trim();
+                if (email.isNotEmpty) {
+                  final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+                  final jwt = await UserPreferences().getUser().then((user) => user.jwt);
+                  final success = await provider.addUserToGroup(jwt, groupId, email);
+
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('User added successfully!')),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to add user.')),
+                    );
+                  }
+                }
+                Navigator.of(context).pop();
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -56,6 +105,15 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
         title: Text('${group_name}\'s members'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              _showAddUserDialog(context, group_id);
+              //Navigator.pushNamed(context, '/');
+            },
+          ),
+        ],
       ),
 
 
@@ -66,7 +124,7 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
           if (users.isEmpty) {
             return Center(child: Text('No users available.'));
           }
-          
+
           return ListView.builder(
             itemCount: users.length,
             itemBuilder: (context, index) {
