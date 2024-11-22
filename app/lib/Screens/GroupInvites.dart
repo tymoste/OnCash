@@ -101,9 +101,21 @@ class GroupInvitesState extends State<GroupInvites> {
                               context,
                               title: 'Accept Invite',
                               content: 'Are you sure you want to accept this invite?',
-                              onConfirm: () {
-                                // Add logic to accept the invite
+                              onConfirm: () async {
                                 print('Invite accepted: ${invite['invite_id']}');
+                                final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+                                final jwt = await UserPreferences().getUser().then((user) => user.jwt);
+
+                                final success = await provider.acceptInvite(jwt, invite['invite_id'].toString());
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Invite accepted successfully')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to accept invite')),
+                                  );
+                                }
                               },
                             );
                           },
@@ -115,16 +127,27 @@ class GroupInvitesState extends State<GroupInvites> {
                               context,
                               title: 'Reject Invite',
                               content: 'Are you sure you want to reject this invite?',
-                              onConfirm: () {
-                                // Add logic to reject the invite
+                              onConfirm: () async {
                                 print('Invite rejected: ${invite['invite_id']}');
+                                final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+                                final jwt = await UserPreferences().getUser().then((user) => user.jwt);
+
+                                final success = await provider.declineInvite(jwt, invite['invite_id'].toString());
+                                if (success) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Invite declined successfully')),
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Failed to declined invite')),
+                                  );
+                                }
                               },
                             );
                           },
                         ),
                       ],
                     ),
-
                   );
                 },
               );

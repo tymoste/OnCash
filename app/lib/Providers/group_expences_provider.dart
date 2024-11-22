@@ -17,6 +17,8 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const getUsersInGroupApiEndpoint = 'http://46.41.136.84:5000/get_users';
   static const addUserToGroupApiEndpoint = 'http://46.41.136.84:5000/invite';
   static const getInvitesApiEndpoint = 'http://46.41.136.84:5000/get_invites';
+  static const acceptInviteApiEndpoint = 'http://46.41.136.84:5000/accept_invite';
+  static const declineInviteApiEndpoint = 'http://46.41.136.84:5000/decline_invite';
 
   late List<Map<String, dynamic>> _invites = [];
   List<Map<String, dynamic>> get invites => _invites;
@@ -24,6 +26,63 @@ class GroupExpencesProvider extends ChangeNotifier{
   late List<otherUser> _users = [];
   List<otherUser> get users => _users;
 
+  Future<bool> declineInvite(String jwt, String inviteId) async{
+    try {
+      final response = await http.post(
+        Uri.parse(declineInviteApiEndpoint),
+        headers: <String, String>{
+          'Content-Type': 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+          'invite_id': inviteId,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        // Refresh invites after successful acceptance
+        await getGroupInvites(jwt);
+        notifyListeners();
+        return true;
+      } else {
+        print('Failed to decline invite: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      print('Error declining invite: $e');
+      return false;
+    }
+  }
+
+
+  Future<bool> acceptInvite(String jwt, String inviteId) async {
+
+  try {
+    final response = await http.post(
+      Uri.parse(acceptInviteApiEndpoint),
+      headers: <String, String>{
+        'Content-Type': 'application/json; charset=UTF-8',
+      },
+      body: jsonEncode(<String, String>{
+        'jwt': jwt,
+        'invite_id': inviteId,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // Refresh invites after successful acceptance
+      await getGroupInvites(jwt);
+      notifyListeners();
+      return true;
+    } else {
+      print('Failed to accept invite: ${response.body}');
+      return false;
+    }
+  } catch (e) {
+    print('Error accepting invite: $e');
+    return false;
+  }
+}
 
   Future<bool> getGroupInvites(String jwt) async {
     try {
@@ -59,7 +118,6 @@ class GroupExpencesProvider extends ChangeNotifier{
       return false;
     }
   }
-
 
   Future<bool> addUserToGroup(String jwt, String groupId, String email) async {
 
@@ -166,7 +224,7 @@ class GroupExpencesProvider extends ChangeNotifier{
     }
 
     if(response.statusCode == 200) {
-      print(response.body);
+      //print(response.body); generating errors
       notifyListeners();
       return true;
     }

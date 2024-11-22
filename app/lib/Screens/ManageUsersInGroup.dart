@@ -57,11 +57,11 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
 
                   if (success) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('User added successfully!')),
+                      const SnackBar(content: Text('User invited!')),
                     );
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Failed to add user.')),
+                      const SnackBar(content: Text('Failed to invite user.')),
                     );
                   }
                 }
@@ -138,75 +138,6 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
           );
         },
       ),
-
-
-
-
-
-
-
-
-      // body: Column(
-      //   children: <Widget>[
-      //     FutureBuilder<User>(
-      //       future: _userData,
-      //       builder: (context, snapshot) {
-      //         if (snapshot.connectionState == ConnectionState.waiting) {
-      //           return Center(child: CircularProgressIndicator());
-      //         } else if (snapshot.hasError) {
-      //           return Center(child: Text('Error loading user data'));
-      //         } else if (!snapshot.hasData) {
-      //           return Center(child: Text('No user data available'));
-      //         } else {
-      //           final user = snapshot.data!;
-      //           return Padding(
-      //             padding: const EdgeInsets.only(top: 30.0),
-      //             child: Center(
-      //               child: Container(
-      //                 width: 200,
-      //                 height: 100,
-      //                 child: Text(
-      //                   'Email: ${user.email}\nUsername: ${user.userName}',
-      //                   style: TextStyle(fontSize: 18),
-      //                 ),
-      //               ),
-      //             ),
-      //           );
-      //         }
-      //       },
-      //     ),
-          
-      //     FutureBuilder<Group>(
-      //       future: _privateGroup,
-      //       builder: (context, snapshot) {
-      //         if (snapshot.connectionState == ConnectionState.waiting) {
-      //           return Center(child: CircularProgressIndicator());
-      //         } else if (snapshot.hasError) {
-      //           print(snapshot.error.toString());
-      //           return Center(child: Text('Error loading private group data'));
-      //         } else if (!snapshot.hasData) {
-      //           return Center(child: Text('No private group data available'));
-      //         } else {
-      //           final privateGroup = snapshot.data!;
-      //           return Padding(
-      //             padding: const EdgeInsets.only(top: 20.0),
-      //             child: Center(
-      //               child: Container(
-      //                 width: 200,
-      //                 height: 100,
-      //                 child: Text(
-      //                   'Private Group: ID: ${privateGroup.id}\n${privateGroup.name}',
-      //                   style: TextStyle(fontSize: 18),
-      //                 ),
-      //               ),
-      //             ),
-      //           );
-      //         }
-      //       },
-      //     ),
-      //   ],
-      // ),
     );
-
   }
 }
