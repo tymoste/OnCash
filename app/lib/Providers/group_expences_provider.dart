@@ -53,7 +53,6 @@ class GroupExpencesProvider extends ChangeNotifier{
           GroupPreferences().savePrivateGroup(privateGroup);
 
           notifyListeners();
-          print('kurwa'); // !!!
           print(response.body);
           print(privateGroup.name);
           return true;
