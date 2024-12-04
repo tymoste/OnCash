@@ -1,12 +1,11 @@
+import 'dart:convert';
 import 'package:app/Providers/auth_provider.dart';
 import 'package:app/Providers/group_expences_provider.dart';
-import 'package:app/Screens/ManageUsersInGroup.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:app/Providers/group_expences_provider.dart';
-
 import '../Models/user.dart';
+import '../Models/expence.dart';
 import '../Utils/shared_preference.dart';
 
 class GroupSpendingsScreenArguments {
@@ -16,316 +15,264 @@ class GroupSpendingsScreenArguments {
   GroupSpendingsScreenArguments(this.group_id, this.group_name);
 }
 
-class Group extends StatefulWidget { 
-  //final int group_id;
-  
+class Group extends StatefulWidget {
   const Group({super.key});
-  
-  //required this.group_id
-  //Group({required this.group_id})
-  
 
-  @override 
-  State<Group> createState() => _GroupState(); 
+  @override
+  State<Group> createState() => _GroupState();
 }
 
-class _GroupState extends State<Group>{
+class _GroupState extends State<Group> {
   int touchedIndex = -1;
-  late Future<User> userData;
+  User? userData;
   static const routeName = '/group_spendings';
 
   @override
   void initState() {
     super.initState();
-    userData = UserPreferences().getUser();
+    loadUser();
   }
 
+   Future<void> loadUser() async {
+    userData = await UserPreferences().getUser();
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    var args = ModalRoute.of(context)!.settings.arguments; //as GroupSpendingsScreenArguments;
-
+    var args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
     if (args == null) {
-      // Obsługa przypadku, gdy args jest null
       return Scaffold(
-        appBar: AppBar(title: Text('Group Screen')),
-        body: Center(
-          child: Text('Brak przekazanych argumentów'),
+        appBar: AppBar(title: const Text('Group Screen')),
+        body: const Center(
+          child: Text('No arguments passed'),
         ),
       );
     }
-    args = args as Map<String, dynamic>;
+
     String group_id = args['group_id'].toString();
     String group_name = args['group_name'].toString();
 
-    //print(args.toString());
-    final groupExpencesProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
-
     return Scaffold(
       appBar: AppBar(
-        title: Text(group_name), //widget.group_id as String
+        title: Text(group_name),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.group),
-            onPressed: () async {
-
-              // var res;
-              //if (_formkey.currentState!.validate()) {  
-                // userData.then((data) async {
-                //   args = args as Map<String, dynamic>;
-                //   var res = await groupExpencesProvider.getUsersInGroupFromServer(
-                //     data.jwt,
-                //     group_id,
-                //   );
-                // });
-              // if(res == true)
-                // print(res);
-                Navigator.pushNamed(
-                  context,
-                  '/get_users_in_group',
-                  arguments: {
-                    "group_id": group_id,
-                    "group_name": group_name,
-                  },
-                );
-              // }
+            icon: const Icon(Icons.group),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/get_users_in_group',
+                arguments: {
+                  "group_id": group_id,
+                  "group_name": group_name,
+                },
+              );
             },
           ),
         ],
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.only(top: 5.0),
-          child: Center(
-            child: Column(
-              children: <Widget>[ 
-                Padding( 
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 5.0,
-                    horizontal: 5.0,
-                  ),
-                  child: SizedBox( 
-                    width: 300, //MediaQuery.of(context).size.width,
-                    height: 60, 
-                    child: Center(
-                      child: Container(
-                        padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                        decoration: BoxDecoration(
-                          color: const Color.fromARGB(255, 241, 241, 241),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              SizedBox(
-                                width: 60,
-                                height: 20,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(18.0))
-                                    ),
-                                  ),
-                                    
-                                  onPressed: () {  },
-                                  child: const Text( 
-                                    '1M', 
-                                    style: TextStyle( 
-                                        fontWeight: FontWeight.bold,
-                                        color: Color.fromARGB(255, 54, 54, 54), fontSize: 8
-                                    ), 
-                                  )   
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              SizedBox(
-                                width: 60,
-                                height: 20,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(18.0))
-                                    ),
-                                  ),
-                                    
-                                  onPressed: () {  },
-                                  child: const Text( 
-                                    '5M', 
-                                    style: TextStyle( 
-                                        fontWeight: FontWeight.bold,
-                                        color: Color.fromARGB(255, 54, 54, 54), fontSize: 8
-                                    ), 
-                                  )   
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              SizedBox(
-                                width: 60,
-                                height: 20,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(18.0))
-                                    ),
-                                  ),
-                                  onPressed: () {  },
-                                  child: const Text( 
-                                    '1Y', 
-                                    style: TextStyle( 
-                                        fontWeight: FontWeight.bold,
-                                        color: Color.fromARGB(255, 54, 54, 54), fontSize: 8
-                                    ), 
-                                  )   
-                                ),
-                              ),
-                              const SizedBox(width: 3),
-                              SizedBox(
-                                width: 70,
-                                height: 20,
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.transparent,
-                                    shadowColor: Colors.transparent,
-                                    shape: const RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.all(Radius.circular(18.0))
-                                    ),
-                                  ),
-                                    
-                                  onPressed: () {  },
-                                  child: const Text( 
-                                    'ALL TIME', 
-                                    style: TextStyle( 
-                                        fontWeight: FontWeight.bold,
-                                        color: Color.fromARGB(255, 54, 54, 54), fontSize: 7
-                                    ), 
-                                  )   
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    )
-                ),
-                 
-               
-
-                Padding( 
-                  padding: const EdgeInsets.only(top: 10.0), //all(10.0), 
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      const Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "ALL TIME",
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.normal,
-                              color: Color.fromARGB(255, 116, 116, 116),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            "TOTAL EXPENSES",
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              fontWeight: FontWeight.normal,
-                              color: Color.fromARGB(255, 58, 58, 58),
-                            ),
-                          ),
-                          SizedBox(height: 5),
-                          Text(
-                            "3000\$",
-                            style: TextStyle(
-                              fontSize: 16.0,
-                              fontWeight: FontWeight.bold,
-                              color: Color.fromARGB(255, 31, 31, 31),
-                            ),
-                          ),
-                        ]
-                      ),
-                      
-                      SizedBox(
-                        width: 300.0,
-                        height: 300.0,
-                        child: PieChart(
-                          
-                          swapAnimationDuration: const Duration(milliseconds: 750),
-                          swapAnimationCurve: Curves.easeInOutQuint,
-                          
-                          PieChartData(
-                            pieTouchData: PieTouchData(
-                              touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                                setState(() {
-                                  if (!event.isInterestedForInteractions ||
-                                      pieTouchResponse == null ||
-                                      pieTouchResponse.touchedSection == null) {
-                                    touchedIndex = -1;
-                                    return;
-                                  }
-                                  touchedIndex = pieTouchResponse
-                                      .touchedSection!.touchedSectionIndex;
-                                  });
-                              },
-                            ),
-                            
-                            sectionsSpace: 12,
-                            startDegreeOffset: 180,
-                            titleSunbeamLayout: true,
-                            sections: showingSections(), 
-                            // [
-                            //   PieChartSectionData( 
-                            //     value: 1,
-                            //     color: Colors.blueAccent,
-                            //   ),
-                            //   PieChartSectionData(
-                            //     value: 2,
-                            //     color: Colors.amberAccent,
-                            //   ),
-                            //   PieChartSectionData(
-                            //     value: 5,
-                            //     color: Colors.cyanAccent,
-                            //   )
-                            // ]
-                          ),
-                        ),
-                      )
-                    ],
-                  )
-                ),
-                const SizedBox(height: 20),
-                ListView.builder(
-                  scrollDirection: Axis.vertical,
-                  shrinkWrap: true,
-                  padding: const EdgeInsets.all(8),
-                  itemCount: 5,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      leading: const Icon(Icons.list),
-                      trailing: const Text(
-                        "35\$",
-                        style: TextStyle(color: Colors.green, fontSize: 15),
-                      ),
-                      title: Text("Category $index")
-                    );
-                  }
-                )
-
-              ]
-            )
-          )  
-        )
+      body: SingleChildScrollView(
+        child: Center(
+          child: Column(
+            children: <Widget>[
+              const SizedBox(height: 10),
+              _buildTimePeriodSelector(),
+              const SizedBox(height: 20),
+              _buildPieChart(),
+              const SizedBox(height: 20),
+              _buildCategoriesList(group_id),
+            ],
+          ),
+        ),
       ),
     );
+  }
+
+  Widget _buildTimePeriodSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+      child: SizedBox(
+        width: 300,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 241, 241, 241),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildTimePeriodButton('1M'),
+                const SizedBox(width: 3),
+                _buildTimePeriodButton('5M'),
+                const SizedBox(width: 3),
+                _buildTimePeriodButton('1Y'),
+                const SizedBox(width: 3),
+                _buildTimePeriodButton('ALL TIME'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimePeriodButton(String label) {
+    return SizedBox(
+      width: 60,
+      height: 20,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.all(Radius.circular(18.0)),
+          ),
+        ),
+        onPressed: () {},
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            color: Color.fromARGB(255, 54, 54, 54),
+            fontSize: 8,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPieChart() {
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "ALL TIME",
+              style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 116, 116, 116)),
+            ),
+            SizedBox(height: 5),
+            Text(
+              "TOTAL EXPENSES",
+              style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 58, 58, 58)),
+            ),
+            SizedBox(height: 5),
+            Text(
+              "3000\$",
+              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        SizedBox(
+          width: 300.0,
+          height: 300.0,
+          child: PieChart(
+            PieChartData(
+              pieTouchData: PieTouchData(
+                touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                  setState(() {
+                    if (!event.isInterestedForInteractions ||
+                        pieTouchResponse == null ||
+                        pieTouchResponse.touchedSection == null) {
+                      touchedIndex = -1;
+                      return;
+                    }
+                    touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                  });
+                },
+              ),
+              sectionsSpace: 12,
+              startDegreeOffset: 180,
+              sections: showingSections(),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCategoriesList(String group_id) {
+    return FutureBuilder(
+      future: Future.wait([
+        _fetchGroupCategories(group_id),
+        _fetchGroupExpenses(group_id),
+      ]),
+      builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        } else if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('No data available'));
+        }
+
+        final categories = snapshot.data![0] as List<Map<String, dynamic>>;
+        final expenses = snapshot.data![1] as List<Expence>;
+
+        final Map<String, List<Expence>> expensesByCategory = {};
+        for (final category in categories) {
+          final categoryId = category['category_id'].toString();
+          expensesByCategory[categoryId] = expenses
+              .where((expense) => expense.categoryId.toString() == categoryId.toString())
+              .toList();
+        }
+
+        return ListView.builder(
+          scrollDirection: Axis.vertical,
+          shrinkWrap: true,
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
+            print(expensesByCategory);
+            print("test:" + categoryExpenses.toString());
+
+            return Card(
+              elevation: 2,
+              child: ExpansionTile(
+                title: Text(
+                  category['category_name'],
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                children: categoryExpenses.isEmpty
+                    ? [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('No expenses in this category'),
+                        ),
+                      ]
+                    : categoryExpenses.map((expense) {
+                        return ListTile(
+                          title: Text(expense.name),
+                          trailing: Text(
+                            '${expense.price}\$',
+                            style: const TextStyle(color: Colors.green, fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchGroupCategories(String groupId) async {
+    final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+    var res = await provider.getGroupCategories(userData!.jwt, groupId);
+    return res;
+  }
+
+  Future<List<Expence>> _fetchGroupExpenses(String groupId) async {
+    final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+     var res = await provider.getExpensesFromGroup(userData!.jwt, groupId);
+    return res;
   }
 
   List<PieChartSectionData> showingSections() {

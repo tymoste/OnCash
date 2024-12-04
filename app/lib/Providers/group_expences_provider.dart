@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
+import 'package:app/Models/expence.dart';
 import 'package:app/Utils/shared_preference.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
@@ -22,6 +23,7 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const addNewGroupCategoryEndpoint = 'http://46.41.136.84:5000/add_category';
   static const getGroupCategoriesEndpoint = 'http://46.41.136.84:5000/get_categories'; 
   static const addExpenseToGroupEndpoint = 'http://46.41.136.84:5000/add_expense';
+  static const getExpensesFromGroupEndpoint = 'http://46.41.136.84:5000/get_expenses';
 
   late List<Map<String, dynamic>> _invites = [];
   List<Map<String, dynamic>> get invites => _invites;
@@ -310,7 +312,7 @@ class GroupExpencesProvider extends ChangeNotifier{
   Future<List<Map<String, dynamic>>> getGroupCategories(String jwt, String groupId) async {
     Response? response;
     try {
-          response = await http.post(Uri.parse(addNewGroupCategoryEndpoint),
+          response = await http.post(Uri.parse(getGroupCategoriesEndpoint),
           headers: <String, String>{
             'Content-Type' : 'application/json; charset=UTF-8',
           },
@@ -372,4 +374,33 @@ class GroupExpencesProvider extends ChangeNotifier{
     return false;
   }
 
+Future<List<Expence>> getExpensesFromGroup(String jwt, String groupId) async {
+    
+    Response? response;
+        try{
+        response = await http.post(Uri.parse(getExpensesFromGroupEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'jwt': jwt,
+          'group_id': groupId,
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return [];
+    }
+
+    if(response.statusCode == 200){
+      final Map<String, dynamic> responseData = json.decode(response!.body);
+      List<dynamic> expencesList = responseData['expenses'];
+      notifyListeners();
+      return expencesList.map((expencesList) => Expence.fromJson(expencesList)).toList();
+    }
+
+    notifyListeners();
+    return [];
+  }
 }
