@@ -19,6 +19,9 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const getInvitesApiEndpoint = 'http://46.41.136.84:5000/get_invites';
   static const acceptInviteApiEndpoint = 'http://46.41.136.84:5000/accept_invite';
   static const declineInviteApiEndpoint = 'http://46.41.136.84:5000/decline_invite';
+  static const addNewGroupCategoryEndpoint = 'http://46.41.136.84:5000/add_category';
+  static const getGroupCategoriesEndpoint = 'http://46.41.136.84:5000/get_categories'; 
+  static const addExpenseToGroupEndpoint = 'http://46.41.136.84:5000/add_expense';
 
   late List<Map<String, dynamic>> _invites = [];
   List<Map<String, dynamic>> get invites => _invites;
@@ -53,7 +56,6 @@ class GroupExpencesProvider extends ChangeNotifier{
       return false;
     }
   }
-
 
   Future<bool> acceptInvite(String jwt, String inviteId) async {
 
@@ -201,7 +203,7 @@ class GroupExpencesProvider extends ChangeNotifier{
     return false;
   } 
 
-  Future<bool> createGroup(String jwt, String groupName, File groupImg) async{
+  Future<bool> createGroup(String jwt, String groupName, File groupImg) async {
 
     var response;
     var request = http.MultipartRequest(
@@ -235,7 +237,7 @@ class GroupExpencesProvider extends ChangeNotifier{
     return false;
   }
 
-  Future<bool> getUsersInGroupFromServer(String jwt, String groupId) async{
+  Future<bool> getUsersInGroupFromServer(String jwt, String groupId) async {
 
     Response? response;
     try{
@@ -272,6 +274,100 @@ class GroupExpencesProvider extends ChangeNotifier{
       notifyListeners();
       return true;
     }
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> addNewGroupCategory(String jwt, String groupId, String categoryName) async {
+
+    Response? response;
+    try{
+        response = await http.post(Uri.parse(addNewGroupCategoryEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+          'group_id': groupId,
+          'name': categoryName
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200){
+      notifyListeners();
+      return true;
+    }
+
+    notifyListeners();
+    return false;
+  }
+
+  Future<List<Map<String, dynamic>>> getGroupCategories(String jwt, String groupId) async {
+    Response? response;
+    try {
+          response = await http.post(Uri.parse(addNewGroupCategoryEndpoint),
+          headers: <String, String>{
+            'Content-Type' : 'application/json; charset=UTF-8',
+          },
+          body: jsonEncode(<String, String>{
+            'jwt': jwt,
+            'group_id': groupId,
+          }),
+    );
+    } catch (e) {
+      print('Error: ' + e.toString());
+      return [];
+    }
+
+    if (response.statusCode == 200) {
+        var responseJson = jsonDecode(response.body);
+        List<dynamic> categoriesJson = responseJson['categories'];
+        
+        List<Map<String, dynamic>> categories = categoriesJson
+            .map((category) => {
+                  'category_id': category['category_id'],
+                  'category_name': category['category_name']
+                })
+            .toList();
+        return categories;
+      } else {
+        return [];
+    }
+  }
+
+  Future<bool> addExpenseToGroup(String jwt, String groupId, String categoryId, double price, String description, String expenceName) async {
+    
+    Response? response;
+        try{
+        response = await http.post(Uri.parse(addExpenseToGroupEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'jwt': jwt,
+          'group_id': groupId,
+          'name': expenceName,
+          'price': price,
+          'description': description,
+          'category_id': categoryId
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200){
+      notifyListeners();
+      return true;
+    }
+
     notifyListeners();
     return false;
   }

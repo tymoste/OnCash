@@ -105,6 +105,12 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
         title: Text('${group_name}\'s members'),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+          Navigator.of(context).pop();
+        },
+      ),
         actions: [
           IconButton(
             icon: Icon(Icons.add),

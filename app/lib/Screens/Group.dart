@@ -81,7 +81,7 @@ class _GroupState extends State<Group>{
                 // });
               // if(res == true)
                 // print(res);
-                Navigator.pushReplacementNamed(
+                Navigator.pushNamed(
                   context,
                   '/get_users_in_group',
                   arguments: {
@@ -324,7 +324,7 @@ class _GroupState extends State<Group>{
             )
           )  
         )
-      )
+      ),
     );
   }
 
