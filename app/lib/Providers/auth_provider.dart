@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:app/Providers/group_expences_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart';
 import 'package:http/http.dart' as http;
@@ -116,8 +117,10 @@ class AuthProvider extends ChangeNotifier{
   }
 
   Future<void> logout() async {
-    final SharedPreferences sp = await SharedPreferences.getInstance();
-    sp.clear();
+    // final SharedPreferences sp = await SharedPreferences.getInstance();
+    final storage = new FlutterSecureStorage();
+    await storage.deleteAll();
+    // sp.clear();
     notifyListeners();
   }
 
@@ -204,7 +207,7 @@ class AuthProvider extends ChangeNotifier{
 
       // TODO: SEND DATA TO SERVER HERE!!! NOT IMPLEMENTED YET
        final response = await http.post(
-        Uri.parse(googleLoginEndpoint), // Możesz potrzebować osobnego endpointu
+        Uri.parse(googleLoginEndpoint),
         headers: <String, String>{
           'Content-Type': 'application/json; charset=UTF-8',
         },
@@ -226,6 +229,11 @@ class AuthProvider extends ChangeNotifier{
 
       //Get groups from server
       User user = await UserPreferences().getUser();
+      print("\n\n\n\n\n\n\n\n");
+      print(user.email);
+      print(user.userName);
+      print(user.jwt);
+      print("\n\n\n\n\n\n\n\n");
       await GroupExpencesProvider().getUserGroups(user.jwt);
       await GroupExpencesProvider().getGroupInvites(user.jwt);
       
@@ -244,6 +252,8 @@ class AuthProvider extends ChangeNotifier{
   Future<void> googleLogout() async {
     await _googleSignIn.signOut();
     _loggedInStatus = Status.NotLoggedIn;
+    final storage = new FlutterSecureStorage();
+    await storage.deleteAll();
     notifyListeners();
   }
 

@@ -12,7 +12,7 @@ class Personal extends StatefulWidget {
 
 class _PersonalState extends State<Personal> {
   late Future<User> _userData;
-  late Future<Group> _privateGroup;
+  late Future<Group?> _privateGroup;
 
   @override
   void initState() {
@@ -59,7 +59,7 @@ class _PersonalState extends State<Personal> {
             },
           ),
           
-          FutureBuilder<Group>(
+          FutureBuilder<Group?>(
             future: _privateGroup,
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
@@ -67,7 +67,7 @@ class _PersonalState extends State<Personal> {
               } else if (snapshot.hasError) {
                 print(snapshot.error.toString());
                 return Center(child: Text('Error loading private group data'));
-              } else if (!snapshot.hasData) {
+              } else if (!snapshot.hasData || snapshot.data == null) {
                 return Center(child: Text('No private group data available'));
               } else {
                 final privateGroup = snapshot.data!;
