@@ -1,3 +1,5 @@
+import 'package:app/Providers/group_expences_provider.dart';
+import 'package:app/Utils/shared_preference.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:app/Providers/auth_provider.dart';
@@ -9,18 +11,30 @@ class Settings extends StatefulWidget {
   State<Settings> createState() => _SettingsState(); 
 }
 
-
 class _SettingsState extends State<Settings> {
 
-  // TODO add counter logic
-  int inviteCount = 3;
+@override
+void initState() {
+  super.initState();
+  _fetchGroupInvites(); // Call the async method
+}
+
+Future<void> _fetchGroupInvites() async {
+  final jwt = await getJwt(); // Wait for the JWT
+  if (jwt.isNotEmpty) {
+    Provider.of<GroupExpencesProvider>(context, listen: false).getGroupInvites(jwt);
+  }
+}
+
+Future<String> getJwt() async {
+  return await UserPreferences().getUser().then((user) => user.jwt);
+}
 
   void _logout() {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    if(authProvider.loggedInStatus == Status.GoogleLoggedIn){
+    if (authProvider.loggedInStatus == Status.GoogleLoggedIn) {
       authProvider.googleLogout();
-    }
-    else if(authProvider.loggedInStatus == Status.LoggedIn){
+    } else if (authProvider.loggedInStatus == Status.LoggedIn) {
       authProvider.logout();
     }
     Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
@@ -55,38 +69,44 @@ class _SettingsState extends State<Settings> {
               },
             ),
             const Divider(),
-            ListTile(
-              leading: const Icon(Icons.group),
-              title: Row(
-                children: [
-                  const Text('Group Invites'),
-                  inviteCount > 0
-                   ? Padding(
-                      padding: const EdgeInsets.only(left: 10.0),
-                      child: Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
-                        ),
-                        child: Text(
-                          '$inviteCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ) : Container(),
-                ],
-              ),
-              onTap: () {
-                Navigator.pushNamed(context, '/group_invites');
+            Consumer<GroupExpencesProvider>(
+              builder: (context, groupProvider, _) {
+                final inviteCount = groupProvider.invites.length;
+                return ListTile(
+                  leading: const Icon(Icons.group),
+                  title: Row(
+                    children: [
+                      const Text('Group Invites'),
+                      inviteCount > 0
+                          ? Padding(
+                              padding: const EdgeInsets.only(left: 10.0),
+                              child: Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 20,
+                                  minHeight: 20,
+                                ),
+                                child: Text(
+                                  '$inviteCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            )
+                          : Container(),
+                    ],
+                  ),
+                  onTap: () {
+                    Navigator.pushNamed(context, '/group_invites');
+                  },
+                );
               },
             ),
             const Divider(),

@@ -103,6 +103,7 @@ class AuthProvider extends ChangeNotifier{
 
         //Get groups from server
         await GroupExpencesProvider().getUserGroups(authUser.jwt);
+        await GroupExpencesProvider().getGroupInvites(authUser.jwt);
 
         _loggedInStatus = Status.LoggedIn;
         notifyListeners();
@@ -224,7 +225,9 @@ class AuthProvider extends ChangeNotifier{
       _loggedInStatus = Status.GoogleLoggedIn;
 
       //Get groups from server
-      await GroupExpencesProvider().getUserGroups(idToken!);
+      User user = await UserPreferences().getUser();
+      await GroupExpencesProvider().getUserGroups(user.jwt);
+      await GroupExpencesProvider().getGroupInvites(user.jwt);
       
       notifyListeners();
       return true;

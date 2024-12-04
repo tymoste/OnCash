@@ -136,6 +136,7 @@ class _GroupCreateState extends State<GroupCreate> {
                           _groupNameController.text,
                           File(_groupImage!.path),
                         );
+                        Navigator.pushNamed(context, '/');
                       } else {
                         print("No image selected!");
                       }

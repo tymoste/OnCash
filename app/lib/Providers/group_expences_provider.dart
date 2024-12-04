@@ -72,6 +72,7 @@ class GroupExpencesProvider extends ChangeNotifier{
     if (response.statusCode == 200) {
       // Refresh invites after successful acceptance
       await getGroupInvites(jwt);
+      await getUserGroups(jwt);
       notifyListeners();
       return true;
     } else {
@@ -225,6 +226,7 @@ class GroupExpencesProvider extends ChangeNotifier{
 
     if(response.statusCode == 200) {
       //print(response.body); generating errors
+      await getUserGroups(jwt);
       notifyListeners();
       return true;
     }

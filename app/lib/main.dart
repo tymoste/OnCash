@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     ],
     child: MaterialApp(
       title: 'OnCash',
-      initialRoute: '/group_spendings', //login
+      initialRoute: '/login', //login
       routes: {
         '/login': (context) => Login(),
         '/': (context) => Home(),
