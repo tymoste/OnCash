@@ -1,8 +1,9 @@
+import 'package:app/Utils/shared_preference.dart';
 import 'package:flutter/material.dart'; 
 import 'package:form_field_validator/form_field_validator.dart'; 
 import 'package:app/Providers/auth_provider.dart';
 import 'package:provider/provider.dart';
-
+import '../Models/user.dart';
 class Login extends StatefulWidget { 
   const Login({Key? key}) : super(key: key); 
   
@@ -15,6 +16,22 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   Map<String, String> userData = {};
+  User? userData2;
+  
+  @override
+  void initState() {
+    super.initState();
+    loadUser();
+  }
+
+   Future<void> loadUser() async {
+    userData2 = await UserPreferences().getUser();
+    setState(() {});
+    if(userData2!.jwt.isNotEmpty){
+      Provider.of<AuthProvider>(context, listen: false).updateAll(userData2!.jwt);
+      Navigator.pushReplacementNamed(context, '/');
+    } 
+  }
 
   @override 
   Widget build(BuildContext context) { 

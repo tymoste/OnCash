@@ -38,57 +38,117 @@ class _GroupState extends State<Group> {
     setState(() {});
   }
 
-  @override
-  Widget build(BuildContext context) {
-    var args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
-    if (args == null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Group Screen')),
-        body: const Center(
-          child: Text('No arguments passed'),
-        ),
-      );
-    }
-
-    String group_id = args['group_id'].toString();
-    String group_name = args['group_name'].toString();
-
+ @override
+Widget build(BuildContext context) {
+  var args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>?;
+  if (args == null) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(group_name),
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.group),
-            onPressed: () {
-              Navigator.pushNamed(
-                context,
-                '/get_users_in_group',
-                arguments: {
-                  "group_id": group_id,
-                  "group_name": group_name,
-                },
-              );
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Column(
-            children: <Widget>[
-              const SizedBox(height: 10),
-              _buildTimePeriodSelector(),
-              const SizedBox(height: 20),
-              _buildPieChart(),
-              const SizedBox(height: 20),
-              _buildCategoriesList(group_id),
-            ],
-          ),
-        ),
+      appBar: AppBar(title: const Text('Group Screen')),
+      body: const Center(
+        child: Text('No arguments passed'),
       ),
     );
   }
+
+  String group_id = args['group_id'].toString();
+  String group_name = args['group_name'].toString();
+
+  return Scaffold(
+    appBar: AppBar(
+      title: Text(group_name),
+      centerTitle: true,
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.group),
+          onPressed: () {
+            Navigator.pushNamed(
+              context,
+              '/get_users_in_group',
+              arguments: {
+                "group_id": group_id,
+                "group_name": group_name,
+              },
+            );
+          },
+        ),
+      ],
+    ),
+    body: Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            child: Center(
+              child: Column(
+                children: <Widget>[
+                  const SizedBox(height: 10),
+                  _buildTimePeriodSelector(),
+                  const SizedBox(height: 20),
+                  _buildPieChart(),
+                  const SizedBox(height: 20),
+                  _buildCategoriesList(group_id),
+                ],
+              ),
+            ),
+          ),
+        ),
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+          color: Colors.white,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Add your first button logic here
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blue,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.attach_money, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Add Expense',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: () {
+                    // Add your second button logic here
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: const [
+                      Icon(Icons.category, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'View Categories',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
   Widget _buildTimePeriodSelector() {
     return Padding(
@@ -196,41 +256,39 @@ class _GroupState extends State<Group> {
     );
   }
 
-  Widget _buildCategoriesList(String group_id) {
-    return FutureBuilder(
-      future: Future.wait([
-        _fetchGroupCategories(group_id),
-        _fetchGroupExpenses(group_id),
-      ]),
-      builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return const Center(child: Text('No data available'));
-        }
+ Widget _buildCategoriesList(String group_id) {
+  return FutureBuilder(
+    future: Future.wait([
+      _fetchGroupCategories(group_id),
+      _fetchGroupExpenses(group_id),
+    ]),
+    builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(child: Text('No data available'));
+      }
 
-        final categories = snapshot.data![0] as List<Map<String, dynamic>>;
-        final expenses = snapshot.data![1] as List<Expence>;
+      final categories = snapshot.data![0] as List<Map<String, dynamic>>;
+      final expenses = snapshot.data![1] as List<Expence>;
 
-        final Map<String, List<Expence>> expensesByCategory = {};
-        for (final category in categories) {
-          final categoryId = category['category_id'].toString();
-          expensesByCategory[categoryId] = expenses
-              .where((expense) => expense.categoryId.toString() == categoryId.toString())
-              .toList();
-        }
+      final Map<String, List<Expence>> expensesByCategory = {};
+      for (final category in categories) {
+        final categoryId = category['category_id'].toString();
+        expensesByCategory[categoryId] = expenses
+            .where((expense) => expense.categoryId.toString() == categoryId.toString())
+            .toList();
+      }
 
-        return ListView.builder(
-          scrollDirection: Axis.vertical,
-          shrinkWrap: true,
+      return SizedBox(
+        height: 325, // Define height for the scrollable list
+        child: ListView.builder(
           itemCount: categories.length,
           itemBuilder: (context, index) {
             final category = categories[index];
             final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
-            print(expensesByCategory);
-            print("test:" + categoryExpenses.toString());
 
             return Card(
               elevation: 2,
@@ -258,10 +316,12 @@ class _GroupState extends State<Group> {
               ),
             );
           },
-        );
-      },
-    );
-  }
+        ),
+      );
+    },
+  );
+}
+
 
   Future<List<Map<String, dynamic>>> _fetchGroupCategories(String groupId) async {
     final provider = Provider.of<GroupExpencesProvider>(context, listen: false);

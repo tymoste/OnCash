@@ -121,6 +121,7 @@ class AuthProvider extends ChangeNotifier{
     final storage = new FlutterSecureStorage();
     await storage.deleteAll();
     // sp.clear();
+    _loggedInStatus = Status.NotLoggedIn;
     notifyListeners();
   }
 
@@ -254,6 +255,13 @@ class AuthProvider extends ChangeNotifier{
     _loggedInStatus = Status.NotLoggedIn;
     final storage = new FlutterSecureStorage();
     await storage.deleteAll();
+    notifyListeners();
+  }
+
+  Future<void> updateAll(String jwt) async{
+    await GroupExpencesProvider().getUserGroups(jwt);
+    await GroupExpencesProvider().getGroupInvites(jwt);
+    _loggedInStatus = Status.LoggedIn;
     notifyListeners();
   }
 
