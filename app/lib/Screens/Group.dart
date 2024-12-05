@@ -289,13 +289,25 @@ Widget build(BuildContext context) {
           itemBuilder: (context, index) {
             final category = categories[index];
             final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
+            
+            // Calculate the total expenses for the category
+            double totalCategoryExpense = categoryExpenses.fold(0.0, (sum, expense) => sum + expense.price);
 
             return Card(
               elevation: 2,
               child: ExpansionTile(
-                title: Text(
-                  category['category_name'],
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      category['category_name'],
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      '\$${totalCategoryExpense.toStringAsFixed(2)}', // Display total expense
+                      style: const TextStyle(fontSize: 14, color: Colors.green),
+                    ),
+                  ],
                 ),
                 children: categoryExpenses.isEmpty
                     ? [
@@ -321,6 +333,7 @@ Widget build(BuildContext context) {
     },
   );
 }
+
 
 
   Future<List<Map<String, dynamic>>> _fetchGroupCategories(String groupId) async {
