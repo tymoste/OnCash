@@ -123,7 +123,7 @@ Widget build(BuildContext context) {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Add your second button logic here
+                    _showAddCategoryDialog(context, group_id);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.green,
@@ -135,7 +135,7 @@ Widget build(BuildContext context) {
                       Icon(Icons.category, size: 20),
                       SizedBox(width: 8),
                       Text(
-                        'View Categories',
+                        'Add Category',
                         style: TextStyle(fontSize: 14),
                       ),
                     ],
@@ -417,7 +417,7 @@ Widget build(BuildContext context) {
       });
   }
 
-void _showAddExpenseDialog(BuildContext context, String groupId) {
+  void _showAddExpenseDialog(BuildContext context, String groupId) {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
@@ -557,7 +557,63 @@ void _showAddExpenseDialog(BuildContext context, String groupId) {
   );
 }
 
+  void _showAddCategoryDialog(BuildContext context, String groupId) {
+    final _formKey = GlobalKey<FormState>();
+    final _categoryNameController = TextEditingController();
 
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Add Category"),
+          content: Form(
+            key: _formKey,
+            child: TextFormField(
+              controller: _categoryNameController,
+              decoration: const InputDecoration(labelText: "Category Name"),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_formKey.currentState?.validate() ?? false) {
+                  String categoryName = _categoryNameController.text;
+
+                  final groupExpensesProvider =
+                      Provider.of<GroupExpencesProvider>(context, listen: false);
+                  groupExpensesProvider.addNewGroupCategory(userData!.jwt, groupId, categoryName).then((isSuccess) {
+                    if (isSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Category added successfully')),
+                      );
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to add category')),
+                      );
+                    }
+                  });
+                }
+              },
+              child: const Text('Add Category'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 
 }
 
