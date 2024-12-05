@@ -100,7 +100,7 @@ Widget build(BuildContext context) {
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    // Add your first button logic here
+                    _showAddExpenseDialog(context, group_id);
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blue,
@@ -403,4 +403,150 @@ Widget build(BuildContext context) {
         }
       });
   }
+
+void _showAddExpenseDialog(BuildContext context, String groupId) {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  String? selectedCategory;
+  String? selectedCategoryName;
+  List<Map<String, dynamic>>? categories;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Add Expense"),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: "Expense Name"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Price"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a price';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+              ),
+              FutureBuilder(
+                future: _fetchGroupCategories(groupId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No categories available');
+                  }
+
+                  categories = snapshot.data as List<Map<String, dynamic>>;
+
+                  return Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        hint: const Text("Select Category"),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedCategory = newValue;
+                            selectedCategoryName = categories
+                                ?.firstWhere((category) => category['category_id'].toString() == newValue)['category_name'];
+                          });
+                        },
+                        items: categories?.map<DropdownMenuItem<String>>((category) {
+                          return DropdownMenuItem<String>(
+                            value: category['category_id'].toString(),
+                            child: Text(category['category_name']),
+                          );
+                        }).toList(),
+                        menuMaxHeight: 200,
+                      ),
+                      if (selectedCategory != null && selectedCategoryName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            "Selected Category: $selectedCategoryName",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState?.validate() ?? false) {
+                double price = double.parse(_priceController.text);
+                String name = _nameController.text;
+                String description = _descriptionController.text;
+                String categoryId = selectedCategory ?? '';
+                
+                final groupExpensesProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
+                groupExpensesProvider.addExpenseToGroup(
+                  userData!.jwt,
+                  groupId,
+                  categoryId,
+                  price,
+                  description,
+                  name,
+                ).then((isSuccess) {
+                  if (isSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Expense added successfully')),
+                    );
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to add expense')),
+                    );
+                  }
+                });
+              }
+            },
+            child: const Text('Add Expense'),
+          ),
+        ],
+      );
+    },
+  );
 }
+
+
+
+}
+
+
+
