@@ -520,8 +520,6 @@ Widget _buildPieChart(String group_id) {
   Future<List<Expence>> _fetchGroupExpenses(String groupId) async {
     final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
     var res = await provider.getExpensesFromGroup(userData!.jwt, groupId);
-    print("kurwa1");
-
     return res;
   }
 

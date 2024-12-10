@@ -397,12 +397,6 @@ Future<List<Expence>> getExpensesFromGroup(String jwt, String groupId) async {
       final Map<String, dynamic> responseData = json.decode(response!.body);
       List<dynamic> expencesList = responseData['expenses'];
       notifyListeners();
-      // expencesList.forEach((expence) {
-      //   print(expence["\n\n\n"]);
-      //   print(expence["name"]);
-      //   print(expence["date"]);
-      //   print(expence["\n\n\n"]);
-      // });
       return expencesList.map((expencesList) => Expence.fromJson(expencesList)).toList();
     }
 
