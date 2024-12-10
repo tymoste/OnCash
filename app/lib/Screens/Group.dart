@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math';
 import 'package:app/Providers/auth_provider.dart';
 import 'package:app/Providers/group_expences_provider.dart';
@@ -8,6 +9,10 @@ import 'package:provider/provider.dart';
 import '../Models/user.dart';
 import '../Models/expence.dart';
 import '../Utils/shared_preference.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
 
 class GroupSpendingsScreenArguments {
   final String group_id;
@@ -101,6 +106,7 @@ Widget build(BuildContext context) {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
+                flex: 2,
                 child: ElevatedButton(
                   onPressed: () {
                     _showAddExpenseDialog(context, group_id);
@@ -118,8 +124,8 @@ Widget build(BuildContext context) {
                         'Add Expense',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color.fromARGB(255, 248, 254, 255)
-                          ),
+                          color: Color.fromARGB(255, 248, 254, 255),
+                        ),
                       ),
                     ],
                   ),
@@ -127,6 +133,21 @@ Widget build(BuildContext context) {
               ),
               const SizedBox(width: 10),
               Expanded(
+                flex: 1,
+                child: Center(
+                  child: IconButton(
+                    onPressed: () async {
+                      await _generatePdfReport(context, group_id, group_name);
+                    },
+                    icon: const Icon(Icons.picture_as_pdf, size: 24),
+                    color: Colors.orange,
+                    tooltip: 'Generate PDF Report',
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 2,
                 child: ElevatedButton(
                   onPressed: () {
                     _showAddCategoryDialog(context, group_id);
@@ -144,8 +165,8 @@ Widget build(BuildContext context) {
                         'Add Category',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Color.fromARGB(255, 238, 255, 239)
-                          ),
+                          color: Color.fromARGB(255, 238, 255, 239),
+                        ),
                       ),
                     ],
                   ),
@@ -661,6 +682,91 @@ Widget _buildPieChart(String group_id) {
       );
     },
   );
+}
+
+Future<void> _generatePdfReport(BuildContext context, String groupId, String groupName) async {
+  final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+
+  final categories = await provider.getGroupCategories(userData!.jwt, groupId);
+  final expenses = await provider.getExpensesFromGroup(userData!.jwt, groupId);
+
+  final Map<String, List<Expence>> expensesByCategory = {};
+  for (final category in categories) {
+    final categoryId = category['category_id'].toString();
+    expensesByCategory[categoryId] = expenses
+        .where((expense) => expense.categoryId.toString() == categoryId)
+        .toList();
+  }
+
+  final pdf = pw.Document();
+
+  pdf.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4,
+      build: (context) => [
+        pw.Header(
+          level: 0,
+          child: pw.Text("$groupName Report", style: pw.TextStyle(fontSize: 24)),
+        ),
+        pw.SizedBox(height: 10),
+        ...categories.map((category) {
+          final categoryName = category['category_name'];
+          final categoryExpenses =
+              expensesByCategory[category['category_id'].toString()] ?? [];
+          final totalExpense = categoryExpenses.fold(
+            0.0,
+            (sum, expense) => sum + expense.price,
+          );
+
+          return pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                "$categoryName (\$${totalExpense.toStringAsFixed(2)})",
+                style: pw.TextStyle(
+                    fontSize: 18, fontWeight: pw.FontWeight.bold),
+              ),
+              pw.SizedBox(height: 5),
+              categoryExpenses.isEmpty
+                  ? pw.Text("No expenses in this category",
+                      style: pw.TextStyle(fontSize: 12))
+                  : pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: categoryExpenses.map((expense) {
+                        return pw.Row(
+                          children: [
+                            pw.Text("- ",
+                                style: pw.TextStyle(fontSize: 12,)), // Punkt
+                            pw.Expanded(
+                              child: pw.Text(
+                                "${expense.name}: \$${expense.price.toStringAsFixed(2)}",
+                                style: pw.TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+              pw.SizedBox(height: 10),
+            ],
+          );
+        }).toList(),
+      ],
+    ),
+  );
+
+  try {
+    final output = await getTemporaryDirectory();
+    final filePath = "${output.path}/group_report.pdf";
+    final file = File(filePath);
+    await file.writeAsBytes(await pdf.save());
+    await OpenFilex.open(filePath);
+  } catch (e) {
+    print("Error while saving/opening PDF: $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Failed to generate or open PDF")),
+    );
+  }
 }
 
   void _showAddCategoryDialog(BuildContext context, String groupId) {
