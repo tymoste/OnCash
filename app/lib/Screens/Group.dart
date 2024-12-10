@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:app/Providers/auth_provider.dart';
 import 'package:app/Providers/group_expences_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -26,6 +27,8 @@ class _GroupState extends State<Group> {
   int touchedIndex = -1;
   User? userData;
   static const routeName = '/group_spendings';
+  String selectedTimePeriod = 'ALL TIME';
+  Map<String, Color> allCategoryColors = {};
 
   @override
   void initState() {
@@ -83,7 +86,7 @@ Widget build(BuildContext context) {
                   const SizedBox(height: 10),
                   _buildTimePeriodSelector(),
                   const SizedBox(height: 20),
-                  _buildPieChart(),
+                  _buildPieChart(group_id),
                   const SizedBox(height: 20),
                   _buildCategoriesList(group_id),
                 ],
@@ -103,17 +106,20 @@ Widget build(BuildContext context) {
                     _showAddExpenseDialog(context, group_id);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color.fromARGB(255, 92, 182, 255),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.attach_money, size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Add Expense',
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 248, 254, 255)
+                          ),
                       ),
                     ],
                   ),
@@ -126,17 +132,20 @@ Widget build(BuildContext context) {
                     _showAddCategoryDialog(context, group_id);
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: const Color.fromARGB(255, 90, 190, 93),
                     padding: const EdgeInsets.symmetric(vertical: 10),
                   ),
-                  child: Row(
+                  child: const Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
+                    children: [
                       Icon(Icons.category, size: 20),
                       SizedBox(width: 8),
                       Text(
                         'Add Category',
-                        style: TextStyle(fontSize: 14),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 238, 255, 239)
+                          ),
                       ),
                     ],
                   ),
@@ -150,27 +159,96 @@ Widget build(BuildContext context) {
   );
 }
 
+
+  DateTime getStartDate(String period) {
+    final now = DateTime.now();
+    switch (period) {
+      case '1M':
+        return DateTime(now.year, now.month - 1, now.day);
+      case '5M':
+        return DateTime(now.year, now.month - 5, now.day);
+      case '1Y':
+        return DateTime(now.year - 1, now.month, now.day);
+      case 'ALL TIME':
+      default:
+        return DateTime(1970); // Earliest possible date
+    }
+  }
+
+  // Widget _buildTimePeriodButton(String label) {
+  //   return SizedBox(
+  //     width: 60,
+  //     height: 20,
+  //     child: ElevatedButton(
+  //       style: ElevatedButton.styleFrom(
+  //         backgroundColor: Colors.transparent,
+  //         shadowColor: Colors.transparent,
+  //         shape: const RoundedRectangleBorder(
+  //           borderRadius: BorderRadius.all(Radius.circular(18.0)),
+  //         ),
+  //       ),
+  //       onPressed: () {},
+  //       child: Text(
+  //         label,
+  //         style: const TextStyle(
+  //           fontWeight: FontWeight.bold,
+  //           color: Color.fromARGB(255, 54, 54, 54),
+  //           fontSize: 8,
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+
+    Widget _buildTimePeriodButton(String period) {
+    final isSelected = selectedTimePeriod == period;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedTimePeriod = period;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color.fromARGB(255, 92, 182, 255) : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color.fromARGB(255, 92, 182, 255), width: 0.5),
+        ),
+        child: Text(
+          period,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color.fromARGB(255, 92, 182, 255),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildTimePeriodSelector() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 5.0),
       child: SizedBox(
-        width: 300,
+        width: 340,
         child: Center(
           child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
             decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 241, 241, 241),
+              color: const Color.fromARGB(255, 248, 248, 248),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildTimePeriodButton('1M'),
-                const SizedBox(width: 3),
+                const SizedBox(width: 5),
                 _buildTimePeriodButton('5M'),
-                const SizedBox(width: 3),
+                const SizedBox(width: 5),
                 _buildTimePeriodButton('1Y'),
-                const SizedBox(width: 3),
+                const SizedBox(width: 5),
                 _buildTimePeriodButton('ALL TIME'),
               ],
             ),
@@ -180,81 +258,163 @@ Widget build(BuildContext context) {
     );
   }
 
-  Widget _buildTimePeriodButton(String label) {
-    return SizedBox(
-      width: 60,
-      height: 20,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.transparent,
-          shadowColor: Colors.transparent,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.all(Radius.circular(18.0)),
-          ),
-        ),
-        onPressed: () {},
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color.fromARGB(255, 54, 54, 54),
-            fontSize: 8,
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildPieChart() {
-    return Stack(
-      alignment: Alignment.center,
-      children: [
-        const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              "ALL TIME",
-              style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 116, 116, 116)),
-            ),
-            SizedBox(height: 5),
-            Text(
-              "TOTAL EXPENSES",
-              style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 58, 58, 58)),
-            ),
-            SizedBox(height: 5),
-            Text(
-              "3000\$",
-              style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-            ),
-          ],
-        ),
-        SizedBox(
-          width: 300.0,
-          height: 300.0,
-          child: PieChart(
-            PieChartData(
-              pieTouchData: PieTouchData(
-                touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                  setState(() {
-                    if (!event.isInterestedForInteractions ||
-                        pieTouchResponse == null ||
-                        pieTouchResponse.touchedSection == null) {
-                      touchedIndex = -1;
-                      return;
-                    }
-                    touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
-                  });
-                },
+Color generateHarmoniousColor(int index) {
+  Random random = Random(index); // Seed with index to ensure uniqueness
+  double hue = random.nextDouble() * 310;
+  double saturation = 0.7 + random.nextDouble() * 0.3; // Random saturation between 0.4 and 0.7
+  double lightness = 0.5 + random.nextDouble() * 0.3; // Random lightness between 0.5 and 0.8
+
+  // Generate a harmonious color using HSL (adjustable base hue)
+  return HSLColor.fromAHSL(1.0, hue, saturation, lightness).toColor();
+}
+
+Widget _buildPieChart(String group_id) {
+  return FutureBuilder(
+    future: Future.wait([
+      _fetchGroupCategories(group_id),
+      _fetchGroupExpenses(group_id),
+    ]),
+    builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(child: Text('No data available'));
+      }
+
+      final categories = (snapshot.data![0] as List<Map<String, dynamic>>)
+          .where((category) => category['category_id'] != null && category['category_name'] != null)
+          .toList();
+
+      final expenses = (snapshot.data![1] as List<Expence>)
+          .where((expense) => expense.categoryId != null && expense.price != null)
+          .toList();
+
+      if (categories.isEmpty) {
+        return const Center(child: Text('No categories data available'));
+      }
+      if (expenses.isEmpty) {
+        return const Center(child: Text('No expenses data available'));
+      }
+
+      final Map<String, double> totalExpensesByCategory = {};
+      for (final category in categories) {
+        final categoryId = category['category_id'].toString();
+        final categoryName = category['category_name'] as String;
+        final totalExpense = expenses
+            .where((expense) => expense.categoryId.toString() == categoryId)
+            .fold<double>(0.0, (sum, expense) => sum + expense.price);
+        totalExpensesByCategory[categoryName] = totalExpense;
+      }
+
+      // Generate harmonious colors for all categories with the same base hue (e.g., blueish hue)
+      allCategoryColors = {}; // Reset the map before populating it
+
+      categories.asMap().forEach((index, category) {
+        final categoryName = category['category_name'];
+        final color = generateHarmoniousColor(index); // Generate harmonious color for each category
+        allCategoryColors[categoryName] = color; // Assign a unique color to the category
+      });
+
+      // Filter categories for the pie chart (e.g., categories with more than 1% of the total expenses)
+      final totalExpenseSum = totalExpensesByCategory.values.fold(0.0, (sum, value) => sum + value);
+      final filteredCategories = totalExpensesByCategory.entries
+          .where((entry) => (entry.value / totalExpenseSum) > 0.01) // Categories > 1%
+          .map((entry) => entry.key)
+          .toList();
+
+      // Create a filtered list of colors for the categories used in the pie chart
+      final filteredCategoryColors = filteredCategories.map((categoryName) {
+        return allCategoryColors[categoryName]!; // Get color for the filtered category
+      }).toList();
+
+      // Populate PieChartSectionData using the filtered categories and colors
+      final sections = filteredCategories.map((categoryName) {
+        final totalExpense = totalExpensesByCategory[categoryName]!;
+        final color = filteredCategoryColors[filteredCategories.indexOf(categoryName)];
+
+        return PieChartSectionData(
+          value: totalExpense,
+          title: '',
+          //title: '${totalExpense.toStringAsFixed(2)}\$',
+          color: color,
+          radius: 50.0,
+          // titleStyle: const TextStyle(
+          //   fontSize: 12.0,
+          //   fontWeight: FontWeight.bold,
+          //   color: Colors.white,
+          // ),
+        );
+      }).toList();
+
+      // Sum all expenses for all categories
+      final totalAllExpenses = totalExpensesByCategory.values.fold(0.0, (sum, value) => sum + value);
+      // Track the touched section index to show details
+      int touchedIndex = -1;
+
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                selectedTimePeriod,
+                style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 116, 116, 116)),
               ),
-              sectionsSpace: 12,
-              startDegreeOffset: 180,
-              sections: showingSections(),
+              const SizedBox(height: 5),
+              const Text(
+                "TOTAL EXPENSES",
+                style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 58, 58, 58)),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "\$${totalAllExpenses.toStringAsFixed(2)}", // Display the total sum of expenses
+                style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              ),
+              if (touchedIndex >= 0)
+                Text(
+                  '${filteredCategories[touchedIndex]}: \$${totalExpensesByCategory[filteredCategories[touchedIndex]]!.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          SizedBox(
+            width: 300.0,
+            height: 300.0,
+            child: PieChart(
+              PieChartData(
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        touchedIndex = -1;
+                        print("touched");
+                        return;
+                      }
+                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    });
+                  },
+                ),
+                sectionsSpace: 12,
+                startDegreeOffset: 180,
+                sections: sections,
+              ),
             ),
           ),
-        ),
-      ],
-    );
-  }
+        ],
+      );
+    },
+  );
+}
+
+
+
+
 
  Widget _buildCategoriesList(String group_id) {
   return FutureBuilder(
@@ -288,10 +448,14 @@ Widget build(BuildContext context) {
           itemCount: categories.length,
           itemBuilder: (context, index) {
             final category = categories[index];
+            final categoryName = category['category_name'];
             final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
             
             // Calculate the total expenses for the category
             double totalCategoryExpense = categoryExpenses.fold(0.0, (sum, expense) => sum + expense.price);
+
+            // Get the color for this category
+            final categoryColor = allCategoryColors[categoryName] ?? const Color.fromARGB(255, 105, 105, 105);
 
             return Card(
               elevation: 2,
@@ -299,9 +463,20 @@ Widget build(BuildContext context) {
                 title: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      category['category_name'],
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      margin: const EdgeInsets.only(right: 8.0),
+                      decoration: BoxDecoration(
+                        color: categoryColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        categoryName,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
                     ),
                     Text(
                       '\$${totalCategoryExpense.toStringAsFixed(2)}', // Display total expense
@@ -344,77 +519,10 @@ Widget build(BuildContext context) {
 
   Future<List<Expence>> _fetchGroupExpenses(String groupId) async {
     final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
-     var res = await provider.getExpensesFromGroup(userData!.jwt, groupId);
-    return res;
-  }
+    var res = await provider.getExpensesFromGroup(userData!.jwt, groupId);
+    print("kurwa1");
 
-  List<PieChartSectionData> showingSections() {
-      return List.generate(4, (i) {
-        final isTouched = i == touchedIndex;
-        final fontSize = isTouched ? 20.0 : 13.0;
-        final radius = isTouched ? 40.0 : 30.0;
-        //const shadows = [Shadow(color: Colors.black, blurRadius: 2)];
-        switch (i) {
-          case 0:
-            return PieChartSectionData(
-              color: Colors.green,
-              value: 40,
-              //title: '40%',
-              radius: radius,
-              showTitle: false,
-              titleStyle: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: const Color.fromARGB(255, 44, 44, 44),
-                //shadows: shadows,
-              ),
-            );
-          case 1:
-            return PieChartSectionData(
-              color: Colors.yellow,
-              value: 30,
-              //title: '30%',
-              radius: radius,
-              showTitle: false,
-              titleStyle: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: const Color.fromARGB(255, 44, 44, 44),
-                //shadows: shadows,
-              ),
-            );
-          case 2:
-            return PieChartSectionData(
-              color: Colors.purple,
-              value: 15,
-              //title: '15%',
-              radius: radius,
-              showTitle: false,
-              titleStyle: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: const Color.fromARGB(255, 44, 44, 44),
-                //shadows: shadows,
-              ),
-            );
-          case 3:
-            return PieChartSectionData(
-              color: Colors.blue,
-              value: 15,
-              //title: '15%',
-              radius: radius,
-              showTitle: false,
-              titleStyle: TextStyle(
-                fontSize: fontSize,
-                fontWeight: FontWeight.bold,
-                color: const Color.fromARGB(255, 44, 44, 44),
-                //shadows: shadows,
-              ),
-            );
-          default:
-            throw Error();
-        }
-      });
+    return res;
   }
 
   void _showAddExpenseDialog(BuildContext context, String groupId) {
