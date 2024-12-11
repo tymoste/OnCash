@@ -139,6 +139,39 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
                 leading: Icon(Icons.person),
                 title: Text(user.userName),
                 subtitle: Text(user.email),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: Colors.red),
+                  onPressed: () {
+                    // Confirm delete action
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          title: const Text("Remove User"),
+                          content: Text("Are you sure you want to remove ${user.userName} from the group?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                Navigator.of(context).pop(); // Close dialog
+                              },
+                              child: const Text("Cancel"),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                // Call delete user function
+                                final jwt = await UserPreferences().getUser().then((user) => user.jwt);
+
+                                Provider.of<GroupExpencesProvider>(context, listen: false).deleteUserFromGroup(jwt, user.userID, int.parse(group_id));
+                                Navigator.of(context).pop();
+                              },
+                              child: const Text("Remove"),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
+                ),
               );
             },
           );

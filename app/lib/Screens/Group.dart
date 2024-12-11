@@ -476,9 +476,45 @@ Widget _buildPieChart(String group_id) {
                     : categoryExpenses.map((expense) {
                         return ListTile(
                           title: Text(expense.name),
-                          trailing: Text(
-                            '${expense.price}\$',
-                            style: const TextStyle(color: Colors.green, fontSize: 14),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                '${expense.price}\$',
+                                style: const TextStyle(color: Colors.green, fontSize: 14),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete, color: Colors.red),
+                                onPressed: () {
+                                  showDialog(
+                                    context: context,
+                                    builder: (BuildContext context) {
+                                      return AlertDialog(
+                                        title: const Text('Confirm Delete'),
+                                        content: const Text('Are you sure you want to delete this expense?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                            },
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () {
+                                              // Perform delete operation here
+                                              Provider.of<GroupExpencesProvider>(context, listen: false).deleteExpenseFromGroup(userData!.jwt, expense.id); 
+                                              Navigator.of(context).pop();
+                                              setState(() {});
+                                            },
+                                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         );
                       }).toList(),
@@ -629,6 +665,7 @@ Widget _buildPieChart(String group_id) {
                       const SnackBar(content: Text('Expense added successfully')),
                     );
                     Navigator.of(context).pop();
+                    setState(() {});
                   } else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Failed to add expense')),

@@ -24,6 +24,8 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const getGroupCategoriesEndpoint = 'http://46.41.136.84:5000/get_categories'; 
   static const addExpenseToGroupEndpoint = 'http://46.41.136.84:5000/add_expense';
   static const getExpensesFromGroupEndpoint = 'http://46.41.136.84:5000/get_expenses';
+  static const deleteExpenseFromGroupEndpoint = 'http://46.41.136.84:5000/delete_expense';
+  static const deleteUserFromGroupEndpoint = 'http://46.41.136.84:5000/delete_user';
 
   late List<Map<String, dynamic>> _invites = [];
   List<Map<String, dynamic>> get invites => _invites;
@@ -405,4 +407,65 @@ Future<List<Expence>> getExpensesFromGroup(String jwt, String groupId) async {
     notifyListeners();
     return [];
   }
+
+Future<bool> deleteUserFromGroup(String jwt, int userId, int groupId) async {
+
+    Response? response;
+    try{
+        response = await http.post(Uri.parse(deleteUserFromGroupEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'jwt': jwt,
+          'group_id': groupId,
+          'user_id': userId
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200){
+      notifyListeners();
+      return true;
+    }
+
+    notifyListeners();
+    return false;
+
+}
+
+Future<bool> deleteExpenseFromGroup(String jwt, int expenseId) async {
+
+    Response? response;
+    try{
+        response = await http.post(Uri.parse(deleteExpenseFromGroupEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, dynamic>{
+          'jwt': jwt,
+          'expense_id': expenseId
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200){
+      notifyListeners();
+      return true;
+    }
+
+    notifyListeners();
+    return false;
+
+}
+
+
 }
