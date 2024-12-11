@@ -1,7 +1,15 @@
+import 'dart:math';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:app/Utils/shared_preference.dart';
 import 'package:app/Models/user.dart';
 import 'package:app/Models/group.dart';
+
+import 'package:app/Providers/group_expences_provider.dart';
+import 'package:fl_chart/fl_chart.dart';
+import 'package:provider/provider.dart';
+import '../Models/expence.dart';
 
 class Personal extends StatefulWidget {
   const Personal({Key? key}) : super(key: key);
@@ -11,84 +19,714 @@ class Personal extends StatefulWidget {
 }
 
 class _PersonalState extends State<Personal> {
-  late Future<User> _userData;
-  late Future<Group?> _privateGroup;
+  // late Future<User> _userData;
+  // late Future<Group?> _privateGroup;
+
+  int touchedIndex = -1;
+  User? userData;
+  Future<User>? FutureUserData;
+  Group? privateGroup;
+  Future<Group?>? futurePrivateGroupData;
+  
+  String selectedTimePeriod = 'ALL TIME';
+  Map<String, Color> allCategoryColors = {};
 
   @override
   void initState() {
     super.initState();
-    _userData = UserPreferences().getUser();
-    _privateGroup = GroupPreferences().getPrivateGroup();
+    loadUser();
+    loadGroup();
+    //userData = UserPreferences().getUser();
+    
+  }
+
+  Future<void> loadUser() async {
+    userData = await UserPreferences().getUser();
+    FutureUserData = UserPreferences().getUser();
+    setState(() {});
+  }
+  
+  Future<void> loadGroup() async {
+    privateGroup = await GroupPreferences().getPrivateGroup();
+    futurePrivateGroupData = GroupPreferences().getPrivateGroup();
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Personal'),
-        centerTitle: true,
-        automaticallyImplyLeading: false,
+        title: FutureBuilder<User>(
+          future: FutureUserData,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return const Center(child: Text('Error loading user data'));
+            } else if (!snapshot.hasData) {
+              return const Center(child: Text('No user data available'));
+            } else {
+            final user = snapshot.data!;
+              
+            return AppBar(
+              title: Text(user.userName),
+              centerTitle: true,
+              automaticallyImplyLeading: false,
+            );
+            }
+          },
+        ),
       ),
+      
       body: Column(
-        children: <Widget>[
-          FutureBuilder<User>(
-            future: _userData,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                return Center(child: Text('Error loading user data'));
-              } else if (!snapshot.hasData) {
-                return Center(child: Text('No user data available'));
-              } else {
-                final user = snapshot.data!;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 30.0),
-                  child: Center(
-                    child: Container(
-                      width: 200,
-                      height: 100,
-                      child: Text(
-                        'Email: ${user.email}\nUsername: ${user.userName}',
-                        style: TextStyle(fontSize: 18),
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              child: FutureBuilder<Group?>(
+                future: futurePrivateGroupData,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading user data'));
+                  } else if (!snapshot.hasData) {
+                    return const Center(child: Text('No user data available'));
+                  } else {
+                    final privateGroup = snapshot.data!;
+                    
+                    return Center(
+                      child: Column(
+                        children: <Widget>[
+                          const SizedBox(height: 10),
+                          _buildTimePeriodSelector(),
+                          const SizedBox(height: 20),
+                          _buildPieChart((privateGroup.id).toString()),
+                          const SizedBox(height: 20),
+                          _buildCategoriesList((privateGroup.id).toString()),
+                        ],
                       ),
-                    ),
-                  ),
-                );
-              }
-            },
+                    );
+                  }
+                },
+              )
+            ),
           ),
-          
-          FutureBuilder<Group?>(
-            future: _privateGroup,
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (snapshot.hasError) {
-                print(snapshot.error.toString());
-                return Center(child: Text('Error loading private group data'));
-              } else if (!snapshot.hasData || snapshot.data == null) {
-                return Center(child: Text('No private group data available'));
-              } else {
-                final privateGroup = snapshot.data!;
-                return Padding(
-                  padding: const EdgeInsets.only(top: 20.0),
-                  child: Center(
-                    child: Container(
-                      width: 200,
-                      height: 100,
-                      child: Text(
-                        'Private Group: ID: ${privateGroup.id}\n${privateGroup.name}',
-                        style: TextStyle(fontSize: 18),
-                      ),
-                    ),
-                  ),
-                );
-              }
-            },
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
+            color: Colors.white,
+            child: FutureBuilder<Group?>(
+                future: futurePrivateGroupData,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return const Center(child: Text('Error loading user data'));
+                  } else if (!snapshot.hasData) {
+                    return const Center(child: Text('No user data available'));
+                  } else {
+                    final privateGroup = snapshot.data!;
+                    
+                    return Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _showAddExpenseDialog(context, (privateGroup.id).toString());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 92, 182, 255),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.attach_money, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Add Expense',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color.fromARGB(255, 248, 254, 255)
+                                    ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () {
+                              _showAddCategoryDialog(context, (privateGroup.id).toString());
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color.fromARGB(255, 90, 190, 93),
+                              padding: const EdgeInsets.symmetric(vertical: 10),
+                            ),
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(Icons.category, size: 20),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Add Category',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Color.fromARGB(255, 238, 255, 239)
+                                    ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              )
           ),
         ],
       ),
+    );
+  }
+
+
+
+    DateTime getStartDate(String period) {
+    final now = DateTime.now();
+    switch (period) {
+      case '1M':
+        return DateTime(now.year, now.month - 1, now.day);
+      case '5M':
+        return DateTime(now.year, now.month - 5, now.day);
+      case '1Y':
+        return DateTime(now.year - 1, now.month, now.day);
+      case 'ALL TIME':
+      default:
+        return DateTime(1970); // Earliest possible date
+    }
+  }
+
+
+  Widget _buildTimePeriodButton(String period) {
+    final isSelected = selectedTimePeriod == period;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedTimePeriod = period;
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color.fromARGB(255, 92, 182, 255) : Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          border: Border.all(color: const Color.fromARGB(255, 92, 182, 255), width: 0.5),
+        ),
+        child: Text(
+          period,
+          style: TextStyle(
+            color: isSelected ? Colors.white : const Color.fromARGB(255, 92, 182, 255),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTimePeriodSelector() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 5.0),
+      child: SizedBox(
+        width: 340,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 5),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 248, 248, 248),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildTimePeriodButton('1M'),
+                const SizedBox(width: 5),
+                _buildTimePeriodButton('5M'),
+                const SizedBox(width: 5),
+                _buildTimePeriodButton('1Y'),
+                const SizedBox(width: 5),
+                _buildTimePeriodButton('ALL TIME'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+Color generateHarmoniousColor(int index) {
+  Random random = Random(index); // Seed with index to ensure uniqueness
+  double hue = random.nextDouble() * 310;
+  double saturation = 0.7 + random.nextDouble() * 0.3; // Random saturation between 0.4 and 0.7
+  double lightness = 0.5 + random.nextDouble() * 0.3; // Random lightness between 0.5 and 0.8
+
+  // Generate a harmonious color using HSL (adjustable base hue)
+  return HSLColor.fromAHSL(1.0, hue, saturation, lightness).toColor();
+}
+
+Widget _buildPieChart(String groupId) {
+  return FutureBuilder(
+    future: Future.wait([
+      _fetchGroupCategories(groupId),
+      _fetchGroupExpenses(groupId),
+    ]),
+    builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(child: Text('No data available'));
+      }
+
+      final categories = (snapshot.data![0] as List<Map<String, dynamic>>)
+          .where((category) => category['category_id'] != null && category['category_name'] != null)
+          .toList();
+
+      final expenses = (snapshot.data![1] as List<Expence>)
+          .where((expense) => expense.categoryId != null && expense.price != null)
+          .toList();
+
+      if (categories.isEmpty) {
+        return const Center(child: Text('No categories data available'));
+      }
+      if (expenses.isEmpty) {
+        return const Center(child: Text('No expenses data available'));
+      }
+
+      final Map<String, double> totalExpensesByCategory = {};
+      for (final category in categories) {
+        final categoryId = category['category_id'].toString();
+        final categoryName = category['category_name'] as String;
+        final totalExpense = expenses
+            .where((expense) => expense.categoryId.toString() == categoryId)
+            .fold<double>(0.0, (sum, expense) => sum + expense.price);
+        totalExpensesByCategory[categoryName] = totalExpense;
+      }
+
+      // Generate harmonious colors for all categories with the same base hue (e.g., blueish hue)
+      allCategoryColors = {}; // Reset the map before populating it
+
+      categories.asMap().forEach((index, category) {
+        final categoryName = category['category_name'];
+        final color = generateHarmoniousColor(index); // Generate harmonious color for each category
+        allCategoryColors[categoryName] = color; // Assign a unique color to the category
+      });
+
+      // Filter categories for the pie chart (e.g., categories with more than 1% of the total expenses)
+      final totalExpenseSum = totalExpensesByCategory.values.fold(0.0, (sum, value) => sum + value);
+      final filteredCategories = totalExpensesByCategory.entries
+          .where((entry) => (entry.value / totalExpenseSum) > 0.01) // Categories > 1%
+          .map((entry) => entry.key)
+          .toList();
+
+      // Create a filtered list of colors for the categories used in the pie chart
+      final filteredCategoryColors = filteredCategories.map((categoryName) {
+        return allCategoryColors[categoryName]!; // Get color for the filtered category
+      }).toList();
+
+      // Populate PieChartSectionData using the filtered categories and colors
+      final sections = filteredCategories.map((categoryName) {
+        final totalExpense = totalExpensesByCategory[categoryName]!;
+        final color = filteredCategoryColors[filteredCategories.indexOf(categoryName)];
+
+        return PieChartSectionData(
+          value: totalExpense,
+          title: '',
+          //title: '${totalExpense.toStringAsFixed(2)}\$',
+          color: color,
+          radius: 50.0,
+          // titleStyle: const TextStyle(
+          //   fontSize: 12.0,
+          //   fontWeight: FontWeight.bold,
+          //   color: Colors.white,
+          // ),
+        );
+      }).toList();
+
+      // Sum all expenses for all categories
+      final totalAllExpenses = totalExpensesByCategory.values.fold(0.0, (sum, value) => sum + value);
+      // Track the touched section index to show details
+      int touchedIndex = -1;
+
+      return Stack(
+        alignment: Alignment.center,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                selectedTimePeriod,
+                style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 116, 116, 116)),
+              ),
+              const SizedBox(height: 5),
+              const Text(
+                "TOTAL EXPENSES",
+                style: TextStyle(fontSize: 12.0, color: Color.fromARGB(255, 58, 58, 58)),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                "\$${totalAllExpenses.toStringAsFixed(2)}", // Display the total sum of expenses
+                style: const TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
+              ),
+              if (touchedIndex >= 0)
+                Text(
+                  '${filteredCategories[touchedIndex]}: \$${totalExpensesByCategory[filteredCategories[touchedIndex]]!.toStringAsFixed(2)}',
+                  style: const TextStyle(fontSize: 11.0, fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          SizedBox(
+            width: 300.0,
+            height: 300.0,
+            child: PieChart(
+              PieChartData(
+                pieTouchData: PieTouchData(
+                  touchCallback: (FlTouchEvent event, pieTouchResponse) {
+                    setState(() {
+                      if (!event.isInterestedForInteractions ||
+                          pieTouchResponse == null ||
+                          pieTouchResponse.touchedSection == null) {
+                        touchedIndex = -1;
+                        print("touched");
+                        return;
+                      }
+                      touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
+                    });
+                  },
+                ),
+                sectionsSpace: 12,
+                startDegreeOffset: 180,
+                sections: sections,
+              ),
+            ),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+
+
+
+
+ Widget _buildCategoriesList(String group_id) {
+  return FutureBuilder(
+    future: Future.wait([
+      _fetchGroupCategories(group_id),
+      _fetchGroupExpenses(group_id),
+    ]),
+    builder: (context, AsyncSnapshot<List<dynamic>> snapshot) {
+      if (snapshot.connectionState == ConnectionState.waiting) {
+        return const Center(child: CircularProgressIndicator());
+      } else if (snapshot.hasError) {
+        return Center(child: Text('Error: ${snapshot.error}'));
+      } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+        return const Center(child: Text('No data available'));
+      }
+
+      final categories = snapshot.data![0] as List<Map<String, dynamic>>;
+      final expenses = snapshot.data![1] as List<Expence>;
+
+      final Map<String, List<Expence>> expensesByCategory = {};
+      for (final category in categories) {
+        final categoryId = category['category_id'].toString();
+        expensesByCategory[categoryId] = expenses
+            .where((expense) => expense.categoryId.toString() == categoryId.toString())
+            .toList();
+      }
+
+      return SizedBox(
+        height: 325, // Define height for the scrollable list
+        child: ListView.builder(
+          itemCount: categories.length,
+          itemBuilder: (context, index) {
+            final category = categories[index];
+            final categoryName = category['category_name'];
+            final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
+            
+            // Calculate the total expenses for the category
+            double totalCategoryExpense = categoryExpenses.fold(0.0, (sum, expense) => sum + expense.price);
+
+            // Get the color for this category
+            final categoryColor = allCategoryColors[categoryName] ?? const Color.fromARGB(255, 105, 105, 105);
+
+            return Card(
+              elevation: 2,
+              child: ExpansionTile(
+                title: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Container(
+                      width: 10.0,
+                      height: 10.0,
+                      margin: const EdgeInsets.only(right: 8.0),
+                      decoration: BoxDecoration(
+                        color: categoryColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    Expanded(
+                      child: Text(
+                        categoryName,
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Text(
+                      '\$${totalCategoryExpense.toStringAsFixed(2)}', // Display total expense
+                      style: const TextStyle(fontSize: 14, color: Colors.green),
+                    ),
+                  ],
+                ),
+                children: categoryExpenses.isEmpty
+                    ? [
+                        const Padding(
+                          padding: EdgeInsets.all(8.0),
+                          child: Text('No expenses in this category'),
+                        ),
+                      ]
+                    : categoryExpenses.map((expense) {
+                        return ListTile(
+                          title: Text(expense.name),
+                          trailing: Text(
+                            '${expense.price}\$',
+                            style: const TextStyle(color: Colors.green, fontSize: 14),
+                          ),
+                        );
+                      }).toList(),
+              ),
+            );
+          },
+        ),
+      );
+    },
+  );
+}
+
+
+
+  Future<List<Map<String, dynamic>>> _fetchGroupCategories(String groupId) async {
+    final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+    var res = await provider.getGroupCategories(userData!.jwt, groupId);
+    return res;
+  }
+
+  Future<List<Expence>> _fetchGroupExpenses(String groupId) async {
+    final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+    var res = await provider.getExpensesFromGroup(userData!.jwt, groupId);
+    return res;
+  }
+
+  void _showAddExpenseDialog(BuildContext context, String groupId) {
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  String? selectedCategory;
+  String? selectedCategoryName;
+  List<Map<String, dynamic>>? categories;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("Add Expense"),
+        content: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextFormField(
+                controller: _nameController,
+                decoration: const InputDecoration(labelText: "Expense Name"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a name';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _priceController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(labelText: "Price"),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a price';
+                  }
+                  if (double.tryParse(value) == null) {
+                    return 'Please enter a valid number';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _descriptionController,
+                decoration: const InputDecoration(labelText: "Description"),
+              ),
+              FutureBuilder(
+                future: _fetchGroupCategories(groupId),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Error: ${snapshot.error}');
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Text('No categories available');
+                  }
+
+                  categories = snapshot.data as List<Map<String, dynamic>>;
+
+                  return Column(
+                    children: [
+                      DropdownButtonFormField<String>(
+                        value: selectedCategory,
+                        hint: const Text("Select Category"),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            selectedCategory = newValue;
+                            selectedCategoryName = categories
+                                ?.firstWhere((category) => category['category_id'].toString() == newValue)['category_name'];
+                          });
+                        },
+                        items: categories?.map<DropdownMenuItem<String>>((category) {
+                          return DropdownMenuItem<String>(
+                            value: category['category_id'].toString(),
+                            child: Text(category['category_name']),
+                          );
+                        }).toList(),
+                        menuMaxHeight: 200,
+                      ),
+                      if (selectedCategory != null && selectedCategoryName != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 10),
+                          child: Text(
+                            "Selected Category: $selectedCategoryName",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (_formKey.currentState?.validate() ?? false) {
+                double price = double.parse(_priceController.text);
+                String name = _nameController.text;
+                String description = _descriptionController.text;
+                String categoryId = selectedCategory ?? '';
+                
+                final groupExpensesProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
+                groupExpensesProvider.addExpenseToGroup(
+                  userData!.jwt,
+                  groupId,
+                  categoryId,
+                  price,
+                  description,
+                  name,
+                ).then((isSuccess) {
+                  if (isSuccess) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Expense added successfully')),
+                    );
+                    Navigator.of(context).pop();
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Failed to add expense')),
+                    );
+                  }
+                });
+              }
+            },
+            child: const Text('Add Expense'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+  void _showAddCategoryDialog(BuildContext context, String groupId) {
+    final _formKey = GlobalKey<FormState>();
+    final _categoryNameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text("Add Category"),
+          content: Form(
+            key: _formKey,
+            child: TextFormField(
+              controller: _categoryNameController,
+              decoration: const InputDecoration(labelText: "Category Name"),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                if (_formKey.currentState?.validate() ?? false) {
+                  String categoryName = _categoryNameController.text;
+
+                  final groupExpensesProvider =
+                      Provider.of<GroupExpencesProvider>(context, listen: false);
+                  groupExpensesProvider.addNewGroupCategory(userData!.jwt, groupId, categoryName).then((isSuccess) {
+                    if (isSuccess) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Category added successfully')),
+                      );
+                      Navigator.of(context).pop();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Failed to add category')),
+                      );
+                    }
+                  });
+                }
+              },
+              child: const Text('Add Category'),
+            ),
+          ],
+        );
+      },
     );
   }
 

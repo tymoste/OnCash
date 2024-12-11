@@ -14,12 +14,12 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 
-class GroupSpendingsScreenArguments {
-  final String group_id;
-  final String group_name;
+// class GroupSpendingsScreenArguments {
+//   final String group_id;
+//   final String group_name;
 
-  GroupSpendingsScreenArguments(this.group_id, this.group_name);
-}
+//   GroupSpendingsScreenArguments(this.group_id, this.group_name);
+// }
 
 class Group extends StatefulWidget {
   const Group({super.key});
