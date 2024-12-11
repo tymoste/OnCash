@@ -44,6 +44,7 @@ class GroupPreferences {
       'name': group.name,
       'private': group.private,
       'img': group.base64Img,
+      'is_admin': group.isAdmin
     }).toList();
 
     // Zapisz listę jako JSON w bezpiecznej pamięci
@@ -58,6 +59,7 @@ class GroupPreferences {
       'name': privateGroup.name,
       'private': privateGroup.private,
       'img': '',
+      
     };
 
     // Zapisz obiekt jako JSON w bezpiecznej pamięci

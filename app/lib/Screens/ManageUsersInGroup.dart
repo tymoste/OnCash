@@ -15,14 +15,24 @@ class Manageusersingroup extends StatefulWidget {
 }
 
 class _ManageusersingroupState extends State<Manageusersingroup> {
-
-  late Future<User> _userData;
-  
+  User? userData;
+  List<Group>? groupData;
 
   @override
   void initState() {
     super.initState();
-    _userData = UserPreferences().getUser();
+    loadUser();
+    loadGroup();
+  }
+
+  Future<void> loadUser() async {
+    userData = await UserPreferences().getUser();
+    setState(() {});
+  }
+
+  Future<void> loadGroup() async {
+    groupData = await GroupPreferences().getPublicGroups();
+    setState(() {});
   }
 
   Future<void> _showAddUserDialog(BuildContext context, String groupId) async {
@@ -77,104 +87,92 @@ class _ManageusersingroupState extends State<Manageusersingroup> {
 
   @override
   Widget build(BuildContext context) {
-
-    Object? args = ModalRoute.of(context)!.settings.arguments;
-    if (args == null) {
+    // Check if userData and groupData are loaded
+    if (userData == null || groupData == null) {
       return Scaffold(
-        appBar: AppBar(title: Text('Group Screen')),
-        body: Center(
-          child: Text('Brak przekazanych argumentów'),
+        appBar: AppBar(
+          title: Text('Loading...'),
         ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
-    args = args as Map<String, dynamic>;
-    String group_id = args['group_id'].toString();
-    String group_name = args['group_name'].toString();
 
-    // Call to the provider to fetch users from provider field
+    // Set current group based on passed group_id
+    String group_id = (ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>)['group_id'].toString();
+
+    final currentGroup = groupData!.firstWhere(
+        (group) => group.id.toString() == group_id, orElse: () => Group());
+
+    // Call to the provider to fetch users in the group
     final usersInGroupProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
-    _userData.then((data) async {
-        await usersInGroupProvider.getUsersInGroupFromServer(
-          data.jwt,
-          group_id,
-        );
-    });
+    usersInGroupProvider.getUsersInGroupFromServer(userData!.jwt, group_id);
 
-   return Scaffold(
+    return Scaffold(
       appBar: AppBar(
-        title: Text('${group_name}\'s members'),
+        title: Text('${currentGroup.name}\'s members'),
         centerTitle: true,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-          Navigator.of(context).pop();
-        },
-      ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () {
-              _showAddUserDialog(context, group_id);
-              //Navigator.pushNamed(context, '/');
-            },
-          ),
+          if (currentGroup.isAdmin)
+            IconButton(
+              icon: Icon(Icons.add),
+              onPressed: () {
+                _showAddUserDialog(context, group_id);
+              },
+            ),
         ],
       ),
-
-
       body: Consumer<GroupExpencesProvider>(
         builder: (context, provider, child) {
           final users = provider.users;
-          print(users.toString());
           if (users.isEmpty) {
             return Center(child: Text('No users available.'));
           }
 
           return ListView.builder(
-            itemCount: users.length,
-            itemBuilder: (context, index) {
-              final user = users[index];
-              return ListTile(
-                leading: Icon(Icons.person),
-                title: Text(user.userName),
-                subtitle: Text(user.email),
-                trailing: IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () {
-                    // Confirm delete action
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: const Text("Remove User"),
-                          content: Text("Are you sure you want to remove ${user.userName} from the group?"),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.of(context).pop(); // Close dialog
-                              },
-                              child: const Text("Cancel"),
-                            ),
-                            ElevatedButton(
-                              onPressed: () async {
-                                // Call delete user function
-                                final jwt = await UserPreferences().getUser().then((user) => user.jwt);
-
-                                Provider.of<GroupExpencesProvider>(context, listen: false).deleteUserFromGroup(jwt, user.userID, int.parse(group_id));
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text("Remove"),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                ),
-              );
-            },
+        itemCount: users.length,
+        itemBuilder: (context, index) {
+          final user = users[index];
+          return ListTile(
+            leading: Icon(Icons.person),
+            title: Text(user.userName),
+            subtitle: Text(user.email),
+            trailing: currentGroup.isAdmin && user.email != userData!.email  // Ensure the user is not removing themselves
+                ? IconButton(
+                    icon: Icon(Icons.close, color: Colors.red),
+                    onPressed: () {
+                      // Confirm delete action
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          return AlertDialog(
+                            title: const Text("Remove User"),
+                            content: Text("Are you sure you want to remove ${user.userName} from the group?"),
+                            actions: [
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.of(context).pop(); // Close dialog
+                                },
+                                child: const Text("Cancel"),
+                              ),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  final jwt = await UserPreferences().getUser().then((user) => user.jwt);
+                                  Provider.of<GroupExpencesProvider>(context, listen: false)
+                                      .deleteUserFromGroup(jwt, user.userID, int.parse(group_id));
+                                  Navigator.of(context).pop();
+                                },
+                                child: const Text("Remove"),
+                              ),
+                            ],
+                          );
+                        },
+                      );
+                    },
+                  )
+                : null, // If not an admin or trying to remove themselves, don't show button
           );
+        },
+      );
         },
       ),
     );

@@ -3,6 +3,7 @@ class User{
   String email;
   String jwt;
 
+
   User({this.userName='', this.email='', this.jwt = ""});
 
   factory User.fromJson(Map<String, dynamic> responseData){

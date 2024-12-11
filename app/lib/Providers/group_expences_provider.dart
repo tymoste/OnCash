@@ -25,7 +25,7 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const addExpenseToGroupEndpoint = 'http://46.41.136.84:5000/add_expense';
   static const getExpensesFromGroupEndpoint = 'http://46.41.136.84:5000/get_expenses';
   static const deleteExpenseFromGroupEndpoint = 'http://46.41.136.84:5000/delete_expense';
-  static const deleteUserFromGroupEndpoint = 'http://46.41.136.84:5000/delete_user';
+  static const deleteUserFromGroupEndpoint = 'http://46.41.136.84:5000/remove_user';
 
   late List<Map<String, dynamic>> _invites = [];
   List<Map<String, dynamic>> get invites => _invites;
@@ -466,6 +466,5 @@ Future<bool> deleteExpenseFromGroup(String jwt, int expenseId) async {
     return false;
 
 }
-
 
 }
