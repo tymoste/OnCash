@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -24,6 +26,10 @@ class GroupInvitesState extends State<GroupInvites> {
     final jwt = await UserPreferences().getUser().then((user) => user.jwt);
     final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
     await provider.getGroupInvites(jwt);
+
+    for (var invite in provider.invites) {
+      await provider.getGroupInfo(jwt, invite['group_id'].toString());
+    }
   }
 
   Future<void> _showConfirmationDialog(
@@ -85,12 +91,20 @@ class GroupInvitesState extends State<GroupInvites> {
                 itemCount: invites.length,
                 itemBuilder: (context, index) {
                   final invite = invites[index];
-                  print(invite.toString());
+                  final groupInfo = provider.groupInfo[invite['group_id'].toString()];
 
                   return ListTile(
-                    leading: const Icon(Icons.group),
-                    title: Text('Group ID: ${invite['group_id']}'),
-                    subtitle: Text('Invite ID: ${invite['invite_id']}'),
+                    leading: groupInfo != null && groupInfo['group_img'] != null
+                        ? CircleAvatar(
+                            backgroundImage: MemoryImage(
+                              const Base64Decoder().convert(groupInfo['group_img']!),
+                            ),
+                          )
+                        : const Icon(Icons.group),
+                    title: groupInfo != null
+                        ? Text(groupInfo['group_name'] ?? 'Group ID: ${invite['group_id']}')
+                        : Text('Group ID: ${invite['group_id']}'),
+                    //subtitle: Text('Invite ID: ${invite['invite_id']}'),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -102,7 +116,6 @@ class GroupInvitesState extends State<GroupInvites> {
                               title: 'Accept Invite',
                               content: 'Are you sure you want to accept this invite?',
                               onConfirm: () async {
-                                print('Invite accepted: ${invite['invite_id']}');
                                 final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
                                 final jwt = await UserPreferences().getUser().then((user) => user.jwt);
 
@@ -128,7 +141,6 @@ class GroupInvitesState extends State<GroupInvites> {
                               title: 'Reject Invite',
                               content: 'Are you sure you want to reject this invite?',
                               onConfirm: () async {
-                                print('Invite rejected: ${invite['invite_id']}');
                                 final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
                                 final jwt = await UserPreferences().getUser().then((user) => user.jwt);
 

@@ -18,6 +18,7 @@ class GroupExpencesProvider extends ChangeNotifier{
   static const getUsersInGroupApiEndpoint = 'http://46.41.136.84:5000/get_users';
   static const addUserToGroupApiEndpoint = 'http://46.41.136.84:5000/invite';
   static const getInvitesApiEndpoint = 'http://46.41.136.84:5000/get_invites';
+  static const getGroupInfoEndpoint = 'http://46.41.136.84:5000/get_group_info';
   static const acceptInviteApiEndpoint = 'http://46.41.136.84:5000/accept_invite';
   static const declineInviteApiEndpoint = 'http://46.41.136.84:5000/decline_invite';
   static const addNewGroupCategoryEndpoint = 'http://46.41.136.84:5000/add_category';
@@ -32,6 +33,9 @@ class GroupExpencesProvider extends ChangeNotifier{
 
   late List<otherUser> _users = [];
   List<otherUser> get users => _users;
+
+  // Caches group information by group_id
+  Map<String, Map<String, String>> groupInfo = {}; 
 
   Future<bool> declineInvite(String jwt, String inviteId) async{
     try {
@@ -124,6 +128,44 @@ class GroupExpencesProvider extends ChangeNotifier{
       print('Error fetching invites: $e');
       return false;
     }
+  }
+
+  Future<bool> getGroupInfo(String jwt, String groupId) async {
+    // If group info is already cached, skip fetching
+    if (groupInfo.containsKey(groupId)) return false;
+
+    Response? response;
+    try{
+      response = await http.post(Uri.parse(getGroupInfoEndpoint),
+        headers: <String, String>{
+          'Content-Type' : 'application/json; charset=UTF-8',
+        },
+        body: jsonEncode(<String, String>{
+          'jwt': jwt,
+          'id': groupId
+        }),
+      );
+    }catch(e){
+      print('Error ' + e.toString());
+      notifyListeners();
+      return false;
+    }
+
+    if(response.statusCode == 200) {
+      print(response.body);
+
+      final data = json.decode(response.body);
+      groupInfo[groupId] = {
+        'group_name': data['name'].toString() ?? 'Unknown Group',
+        'group_img': data['img'].toString(), // Base64-encoded image
+      };
+      notifyListeners();
+      return true;
+      
+    }
+
+    notifyListeners();
+    return false;
   }
 
   Future<bool> addUserToGroup(String jwt, String groupId, String email) async {
