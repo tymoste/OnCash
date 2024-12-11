@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:app/Utils/shared_preference.dart';
@@ -10,6 +11,11 @@ import 'package:app/Providers/group_expences_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:provider/provider.dart';
 import '../Models/expence.dart';
+
+import 'package:pdf/widgets.dart' as pw;
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
 
 class Personal extends StatefulWidget {
   const Personal({Key? key}) : super(key: key);
@@ -35,9 +41,7 @@ class _PersonalState extends State<Personal> {
   void initState() {
     super.initState();
     loadUser();
-    loadGroup();
-    //userData = UserPreferences().getUser();
-    
+    loadGroup();    
   }
 
   Future<void> loadUser() async {
@@ -57,6 +61,7 @@ class _PersonalState extends State<Personal> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: FutureBuilder<User>(
           future: FutureUserData,
           builder: (context, snapshot) {
@@ -131,6 +136,7 @@ class _PersonalState extends State<Personal> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Expanded(
+                          flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
                               _showAddExpenseDialog(context, (privateGroup.id).toString());
@@ -148,8 +154,8 @@ class _PersonalState extends State<Personal> {
                                   'Add Expense',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Color.fromARGB(255, 248, 254, 255)
-                                    ),
+                                    color: Color.fromARGB(255, 248, 254, 255),
+                                  ),
                                 ),
                               ],
                             ),
@@ -157,6 +163,21 @@ class _PersonalState extends State<Personal> {
                         ),
                         const SizedBox(width: 10),
                         Expanded(
+                          flex: 1,
+                          child: Center(
+                            child: IconButton(
+                              onPressed: () async {
+                                await _generatePdfReport(context, (privateGroup.id).toString(), (privateGroup.name).toString());
+                              },
+                              icon: const Icon(Icons.picture_as_pdf, size: 24),
+                              color: Colors.orange,
+                              tooltip: 'Generate PDF Report',
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          flex: 2,
                           child: ElevatedButton(
                             onPressed: () {
                               _showAddCategoryDialog(context, (privateGroup.id).toString());
@@ -174,8 +195,8 @@ class _PersonalState extends State<Personal> {
                                   'Add Category',
                                   style: TextStyle(
                                     fontSize: 14,
-                                    color: Color.fromARGB(255, 238, 255, 239)
-                                    ),
+                                    color: Color.fromARGB(255, 238, 255, 239),
+                                  ),
                                 ),
                               ],
                             ),
@@ -350,11 +371,6 @@ Widget _buildPieChart(String groupId) {
           //title: '${totalExpense.toStringAsFixed(2)}\$',
           color: color,
           radius: 50.0,
-          // titleStyle: const TextStyle(
-          //   fontSize: 12.0,
-          //   fontWeight: FontWeight.bold,
-          //   color: Colors.white,
-          // ),
         );
       }).toList();
 
@@ -402,7 +418,6 @@ Widget _buildPieChart(String groupId) {
                           pieTouchResponse == null ||
                           pieTouchResponse.touchedSection == null) {
                         touchedIndex = -1;
-                        print("touched");
                         return;
                       }
                       touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
@@ -728,6 +743,92 @@ Widget _buildPieChart(String groupId) {
         );
       },
     );
+  }
+
+
+  Future<void> _generatePdfReport(BuildContext context, String groupId, String groupName) async {
+    final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+
+    final categories = await provider.getGroupCategories(userData!.jwt, groupId);
+    final expenses = await provider.getExpensesFromGroup(userData!.jwt, groupId);
+
+    final Map<String, List<Expence>> expensesByCategory = {};
+    for (final category in categories) {
+      final categoryId = category['category_id'].toString();
+      expensesByCategory[categoryId] = expenses
+          .where((expense) => expense.categoryId.toString() == categoryId)
+          .toList();
+    }
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        build: (context) => [
+          pw.Header(
+            level: 0,
+            child: pw.Text("$groupName Report", style: pw.TextStyle(fontSize: 24)),
+          ),
+          pw.SizedBox(height: 10),
+          ...categories.map((category) {
+            final categoryName = category['category_name'];
+            final categoryExpenses =
+                expensesByCategory[category['category_id'].toString()] ?? [];
+            final totalExpense = categoryExpenses.fold(
+              0.0,
+              (sum, expense) => sum + expense.price,
+            );
+
+            return pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  "$categoryName (\$${totalExpense.toStringAsFixed(2)})",
+                  style: pw.TextStyle(
+                      fontSize: 18, fontWeight: pw.FontWeight.bold),
+                ),
+                pw.SizedBox(height: 5),
+                categoryExpenses.isEmpty
+                    ? pw.Text("No expenses in this category",
+                        style: pw.TextStyle(fontSize: 12))
+                    : pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: categoryExpenses.map((expense) {
+                          return pw.Row(
+                            children: [
+                              pw.Text("- ",
+                                  style: pw.TextStyle(fontSize: 12,)), // Punkt
+                              pw.Expanded(
+                                child: pw.Text(
+                                  "${expense.name}: \$${expense.price.toStringAsFixed(2)}",
+                                  style: pw.TextStyle(fontSize: 12),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                pw.SizedBox(height: 10),
+              ],
+            );
+          }).toList(),
+        ],
+      ),
+    );
+
+    try {
+      final output = await getTemporaryDirectory();
+      final filePath = "${output.path}/group_report.pdf";
+      final file = File(filePath);
+      await file.writeAsBytes(await pdf.save());
+      await OpenFilex.open(filePath);
+    } catch (e) {
+      print("Error while saving/opening PDF: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Failed to generate or open PDF")),
+      );
+    }
   }
 
 }

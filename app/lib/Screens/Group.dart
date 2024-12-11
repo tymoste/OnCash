@@ -14,13 +14,6 @@ import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 
-// class GroupSpendingsScreenArguments {
-//   final String group_id;
-//   final String group_name;
-
-//   GroupSpendingsScreenArguments(this.group_id, this.group_name);
-// }
-
 class Group extends StatefulWidget {
   const Group({super.key});
 
@@ -196,33 +189,7 @@ Widget build(BuildContext context) {
     }
   }
 
-  // Widget _buildTimePeriodButton(String label) {
-  //   return SizedBox(
-  //     width: 60,
-  //     height: 20,
-  //     child: ElevatedButton(
-  //       style: ElevatedButton.styleFrom(
-  //         backgroundColor: Colors.transparent,
-  //         shadowColor: Colors.transparent,
-  //         shape: const RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.all(Radius.circular(18.0)),
-  //         ),
-  //       ),
-  //       onPressed: () {},
-  //       child: Text(
-  //         label,
-  //         style: const TextStyle(
-  //           fontWeight: FontWeight.bold,
-  //           color: Color.fromARGB(255, 54, 54, 54),
-  //           fontSize: 8,
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
-
-    Widget _buildTimePeriodButton(String period) {
+  Widget _buildTimePeriodButton(String period) {
     final isSelected = selectedTimePeriod == period;
 
     return GestureDetector(
@@ -362,11 +329,6 @@ Widget _buildPieChart(String group_id) {
           //title: '${totalExpense.toStringAsFixed(2)}\$',
           color: color,
           radius: 50.0,
-          // titleStyle: const TextStyle(
-          //   fontSize: 12.0,
-          //   fontWeight: FontWeight.bold,
-          //   color: Colors.white,
-          // ),
         );
       }).toList();
 
@@ -414,7 +376,6 @@ Widget _buildPieChart(String group_id) {
                           pieTouchResponse == null ||
                           pieTouchResponse.touchedSection == null) {
                         touchedIndex = -1;
-                        print("touched");
                         return;
                       }
                       touchedIndex = pieTouchResponse.touchedSection!.touchedSectionIndex;
