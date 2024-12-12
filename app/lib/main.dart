@@ -32,6 +32,7 @@ class MyApp extends StatelessWidget {
     ],
     child: MaterialApp(
       title: 'OnCash',
+      debugShowCheckedModeBanner: false,
       initialRoute: '/login', //login
       routes: {
         '/login': (context) => Login(),
