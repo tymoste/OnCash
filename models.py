@@ -11,7 +11,6 @@ class User(db.Model):
     
     groups = db.relationship('Group', secondary='user_groups', back_populates='members')
     expenses = db.relationship('Expense', back_populates='user')
-    roles = db.relationship('Role', back_populates='user')
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -46,6 +45,7 @@ class Expense(db.Model):
     name = db.Column(db.String(512), nullable=False)
     price = db.Column(db.Float, nullable=False)
     description = db.Column(db.String(2048), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=True)
@@ -59,10 +59,12 @@ class Group(db.Model):
     __tablename__ = "groups"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(128), nullable=False)
-    
+    privite = db.Column(db.Boolean, primary_key=False)
+    image = db.Column(db.LargeBinary, nullable=True)  
+    image_mimetype = db.Column(db.String(128), nullable=True)  
+    owner_id = db.Column(db.Integer, nullable=True)
     members = db.relationship('User', secondary='user_groups', back_populates='groups')
     expenses = db.relationship('Expense', back_populates='group')
-    roles = db.relationship('Role', back_populates='group')
 
 class Category(db.Model):
     __tablename__ = "categories"
@@ -73,16 +75,15 @@ class Category(db.Model):
     
     expenses = db.relationship('Expense', back_populates='category')
 
-class Role(db.Model):
-    __tablename__ = "roles"
+
+
+class Invite(db.Model):
+    __tablename__ = "invites"
     id = db.Column(db.Integer, primary_key=True)
-    permission_level = db.Column(db.Integer, nullable=False)
-    
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     group_id = db.Column(db.Integer, db.ForeignKey('groups.id'), nullable=False)
-    
-    user = db.relationship('User', back_populates='roles')
-    group = db.relationship('Group', back_populates='roles')
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    status = db.Column(db.String(128), nullable=True)
+
 
 user_groups = db.Table(
     'user_groups',
