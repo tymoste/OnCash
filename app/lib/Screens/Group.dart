@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+import 'package:app/Models/otherUser.dart';
 import 'package:app/Providers/auth_provider.dart';
 import 'package:app/Providers/group_expences_provider.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -13,17 +14,19 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
+import "package:app/Models/group.dart";
 
-class Group extends StatefulWidget {
-  const Group({super.key});
+class GroupScreen extends StatefulWidget {
+  const GroupScreen({super.key});
 
   @override
-  State<Group> createState() => _GroupState();
+  State<GroupScreen> createState() => _GroupScreenState();
 }
 
-class _GroupState extends State<Group> {
+class _GroupScreenState extends State<GroupScreen> {
   int touchedIndex = -1;
   User? userData;
+  List<Group>? groupData;
   static const routeName = '/group_spendings';
   String selectedTimePeriod = 'ALL TIME';
   Map<String, Color> allCategoryColors = {};
@@ -32,10 +35,16 @@ class _GroupState extends State<Group> {
   void initState() {
     super.initState();
     loadUser();
+    loadGroup();
   }
 
-   Future<void> loadUser() async {
+  Future<void> loadUser() async {
     userData = await UserPreferences().getUser();
+    setState(() {});
+  }
+
+  Future<void> loadGroup() async {
+    groupData = await GroupPreferences().getPublicGroups();
     setState(() {});
   }
 
@@ -53,6 +62,12 @@ Widget build(BuildContext context) {
 
   String group_id = args['group_id'].toString();
   String group_name = args['group_name'].toString();
+  final current_group = groupData!.firstWhere(
+    (group) => group.id.toString() == group_id, orElse: () => Group()
+  );
+
+  final usersInGroupProvider = Provider.of<GroupExpencesProvider>(context, listen: false);
+    usersInGroupProvider.getUsersInGroupFromServer(userData!.jwt, group_id);
 
   return Scaffold(
     appBar: AppBar(
@@ -84,9 +99,9 @@ Widget build(BuildContext context) {
                   const SizedBox(height: 10),
                   _buildTimePeriodSelector(),
                   const SizedBox(height: 20),
-                  _buildPieChart(group_id),
+                  _buildPieChart(group_id, selectedTimePeriod),
                   const SizedBox(height: 20),
-                  _buildCategoriesList(group_id),
+                  _buildCategoriesList(group_id, selectedTimePeriod),
                 ],
               ),
             ),
@@ -97,7 +112,8 @@ Widget build(BuildContext context) {
           color: Colors.white,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
+            children: current_group.isAdmin
+             ? [
               Expanded(
                 flex: 2,
                 child: ElevatedButton(
@@ -165,7 +181,64 @@ Widget build(BuildContext context) {
                   ),
                 ),
               ),
-            ],
+            ]
+            : [
+              Expanded(
+                flex: 1,
+                child: ElevatedButton(
+                  onPressed: () {
+                    _showAddExpenseDialog(context, group_id);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 92, 182, 255),
+                    padding: const EdgeInsets.symmetric(vertical: 10),
+                  ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.attach_money, size: 20),
+                      SizedBox(width: 8),
+                      Text(
+                        'Add Expense',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color.fromARGB(255, 248, 254, 255),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                flex: 1,
+                child: ElevatedButton(
+                  onPressed: () async {
+                    await _generatePdfReport(context, group_id, group_name);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.orange,
+                    padding: const EdgeInsets.symmetric(vertical: 10)
+                  ),
+                  child:
+                    const Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.picture_as_pdf, size: 24),
+                        SizedBox(width: 8),
+                        Text(
+                          'Generate PDF report',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Color.fromARGB(255, 248, 254, 255)
+                          )
+                        )
+                      ]
+                    )
+                ),
+              ),
+            ]
+            ,
           ),
         ),
       ],
@@ -257,7 +330,7 @@ Color generateHarmoniousColor(int index) {
   return HSLColor.fromAHSL(1.0, hue, saturation, lightness).toColor();
 }
 
-Widget _buildPieChart(String group_id) {
+Widget _buildPieChart(String group_id, String period) {
   return FutureBuilder(
     future: Future.wait([
       _fetchGroupCategories(group_id),
@@ -272,12 +345,14 @@ Widget _buildPieChart(String group_id) {
         return const Center(child: Text('No data available'));
       }
 
+      DateTime date = getStartDate(period);
+
       final categories = (snapshot.data![0] as List<Map<String, dynamic>>)
           .where((category) => category['category_id'] != null && category['category_name'] != null)
           .toList();
 
       final expenses = (snapshot.data![1] as List<Expence>)
-          .where((expense) => expense.categoryId != null && expense.price != null)
+          .where((expense) => expense.categoryId != null && expense.price != null && expense.date.isAfter(date))
           .toList();
 
       if (categories.isEmpty) {
@@ -398,7 +473,7 @@ Widget _buildPieChart(String group_id) {
 
 
 
- Widget _buildCategoriesList(String group_id) {
+ Widget _buildCategoriesList(String group_id, String period) {
   return FutureBuilder(
     future: Future.wait([
       _fetchGroupCategories(group_id),
@@ -415,12 +490,13 @@ Widget _buildPieChart(String group_id) {
 
       final categories = snapshot.data![0] as List<Map<String, dynamic>>;
       final expenses = snapshot.data![1] as List<Expence>;
+      DateTime date = getStartDate(period);
 
       final Map<String, List<Expence>> expensesByCategory = {};
       for (final category in categories) {
         final categoryId = category['category_id'].toString();
         expensesByCategory[categoryId] = expenses
-            .where((expense) => expense.categoryId.toString() == categoryId.toString())
+            .where((expense) => expense.categoryId.toString() == categoryId.toString() && expense.date.isAfter(date))
             .toList();
       }
 
@@ -432,7 +508,11 @@ Widget _buildPieChart(String group_id) {
             final category = categories[index];
             final categoryName = category['category_name'];
             final categoryExpenses = expensesByCategory[category['category_id'].toString()] ?? [];
-            
+            final provider = Provider.of<GroupExpencesProvider>(context, listen: false);
+            List<otherUser> users = provider.users;
+            int myId = users.firstWhere(
+              (user) => user.email == userData!.email
+            ).userID;
             // Calculate the total expenses for the category
             double totalCategoryExpense = categoryExpenses.fold(0.0, (sum, expense) => sum + expense.price);
 
@@ -483,37 +563,38 @@ Widget _buildPieChart(String group_id) {
                                 '${expense.price}\$',
                                 style: const TextStyle(color: Colors.green, fontSize: 14),
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text('Confirm Delete'),
-                                        content: const Text('Are you sure you want to delete this expense?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              // Perform delete operation here
-                                              Provider.of<GroupExpencesProvider>(context, listen: false).deleteExpenseFromGroup(userData!.jwt, expense.id); 
-                                              Navigator.of(context).pop();
-                                              setState(() {});
-                                            },
-                                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
+                              if(myId == expense.adderId)
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (BuildContext context) {
+                                        return AlertDialog(
+                                          title: const Text('Confirm Delete'),
+                                          content: const Text('Are you sure you want to delete this expense?'),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.of(context).pop();
+                                              },
+                                              child: const Text('Cancel'),
+                                            ),
+                                            TextButton(
+                                              onPressed: () {
+                                                // Perform delete operation here
+                                                Provider.of<GroupExpencesProvider>(context, listen: false).deleteExpenseFromGroup(userData!.jwt, expense.id); 
+                                                Navigator.of(context).pop();
+                                                setState(() {});
+                                              },
+                                              child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                ),
                             ],
                           ),
                         );

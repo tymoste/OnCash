@@ -44,7 +44,7 @@ class MyApp extends StatelessWidget {
         '/change_username': (context) => ChangeUsername(),
         '/change_password': (context) => ChangePassword(),
         '/group_invites': (context) => GroupInvites(),
-        '/group_spendings': (context) => const Group(),
+        '/group_spendings': (context) => const GroupScreen(),
         '/create_group' : (context) => GroupCreate(),
         '/get_users_in_group' : (context) => Manageusersingroup(),
       }, 
