@@ -1,8 +1,11 @@
 import 'dart:convert';
 
+import 'package:app/Models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:app/Models/group.dart';
 import 'package:app/Utils/shared_preference.dart';
+import 'package:provider/provider.dart';
+import 'package:app/Providers/group_expences_provider.dart';
 
 class GroupListScreen extends StatefulWidget {
   const GroupListScreen({super.key});
@@ -13,6 +16,7 @@ class GroupListScreen extends StatefulWidget {
 
 class _GroupListScreenState extends State<GroupListScreen> {
   late Future<List<Group>> _publicGroups;
+  User? userData;
 
   @override
   void initState() {

@@ -482,86 +482,86 @@ Widget _buildPieChart(String groupId) {
             final categoryColor = allCategoryColors[categoryName] ?? const Color.fromARGB(255, 105, 105, 105);
 
             return Card(
-              elevation: 2,
-              child: ExpansionTile(
-                title: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      width: 10.0,
-                      height: 10.0,
-                      margin: const EdgeInsets.only(right: 8.0),
-                      decoration: BoxDecoration(
-                        color: categoryColor,
-                        shape: BoxShape.circle,
-                      ),
+            elevation: 2,
+            child: ExpansionTile(
+              title: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    width: 10.0,
+                    height: 10.0,
+                    margin: const EdgeInsets.only(right: 8.0),
+                    decoration: BoxDecoration(
+                      color: categoryColor,
+                      shape: BoxShape.circle,
                     ),
-                    Expanded(
-                      child: Text(
-                        categoryName,
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                  ),
+                  Expanded(
+                    child: Text(
+                      categoryName,
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      '\$${totalCategoryExpense.toStringAsFixed(2)}', // Display total expense
-                      style: const TextStyle(fontSize: 14, color: Colors.green),
-                    ),
-                  ],
-                ),
-                children: categoryExpenses.isEmpty
-                    ? [
-                        const Padding(
-                          padding: EdgeInsets.all(8.0),
-                          child: Text('No expenses in this category'),
-                        ),
-                      ]
-                    : categoryExpenses.map((expense) {
-                        return ListTile(
-                          title: Text(expense.name),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                '${expense.price}\$',
-                                style: const TextStyle(color: Colors.green, fontSize: 14),
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (BuildContext context) {
-                                      return AlertDialog(
-                                        title: const Text('Confirm Delete'),
-                                        content: const Text('Are you sure you want to delete this expense?'),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child: const Text('Cancel'),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              // Perform delete operation here
-                                              Provider.of<GroupExpencesProvider>(context, listen: false).deleteExpenseFromGroup(userData!.jwt, expense.id); 
-                                              Navigator.of(context).pop();
-                                              setState(() {});
-                                            },
-                                            child: const Text('Delete', style: TextStyle(color: Colors.red)),
-                                          ),
-                                        ],
-                                      );
-                                    },
-                                  );
-                                },
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
+                  ),
+                  Text(
+                    '\$${totalCategoryExpense.toStringAsFixed(2)}', // Display total expense
+                    style: const TextStyle(fontSize: 14, color: Colors.green),
+                  ),
+                ],
               ),
-            );
+              children: categoryExpenses.isEmpty
+                  ? [
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: Text('No expenses in this category'),
+                      ),
+                    ]
+                  : categoryExpenses.map((expense) {
+                      return ListTile(
+                        title: Text(expense.name),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              '${expense.price}\$',
+                              style: const TextStyle(color: Colors.green, fontSize: 14),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                              onPressed: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: const Text('Confirm Delete'),
+                                      content: const Text('Are you sure you want to delete this expense?'),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('Cancel'),
+                                        ),
+                                        TextButton(
+                                          onPressed: () {
+                                            // Perform delete operation here
+                                            Provider.of<GroupExpencesProvider>(context, listen: false).deleteExpenseFromGroup(userData!.jwt, expense.id); 
+                                            Navigator.of(context).pop();
+                                            setState(() {});
+                                          },
+                                          child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+            ),
+          );
           },
         ),
       );

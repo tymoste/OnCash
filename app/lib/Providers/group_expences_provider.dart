@@ -138,6 +138,8 @@ class GroupExpencesProvider extends ChangeNotifier{
     try{
       response = await http.post(Uri.parse(getGroupInfoEndpoint),
         headers: <String, String>{
+          'Connection': 'Keep-Alive',
+          'Accept-Encoding': 'gzip, deflate, br',
           'Content-Type' : 'application/json; charset=UTF-8',
         },
         body: jsonEncode(<String, String>{

@@ -60,8 +60,15 @@ Widget build(BuildContext context) {
     );
   }
 
+  if (groupData == null || userData == null) {
+    return const Scaffold(
+      body: Center(child: CircularProgressIndicator()),
+    );
+  }
+
   String group_id = args['group_id'].toString();
   String group_name = args['group_name'].toString();
+
   final current_group = groupData!.firstWhere(
     (group) => group.id.toString() == group_id, orElse: () => Group()
   );
@@ -513,6 +520,7 @@ Widget _buildPieChart(String group_id, String period) {
             int myId = users.firstWhere(
               (user) => user.email == userData!.email
             ).userID;
+
             // Calculate the total expenses for the category
             double totalCategoryExpense = categoryExpenses.fold(0.0, (sum, expense) => sum + expense.price);
 
@@ -554,6 +562,12 @@ Widget _buildPieChart(String group_id, String period) {
                         ),
                       ]
                     : categoryExpenses.map((expense) {
+
+                        String expenseAdder = users.firstWhere(
+                          (user) => expense.adderId == user.userID, orElse: () => otherUser()
+                        ).userName;
+
+
                         return ListTile(
                           title: Text(expense.name),
                           trailing: Row(
